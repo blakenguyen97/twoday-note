@@ -19,6 +19,7 @@
 - **Today and tomorrow.** Two tabs, switch with **⌘1 ⌘2**.
 - **Overdue at a glance.** Unfinished tasks from earlier days move to the top of today with an orange mark: "từ T4" (since Wednesday) or "trễ 3 ngày" (3 days late).
 - **Xem sau (look at later).** A third tab, **⌘3**, for things you came across and want to see later: links, snippets, screenshots. No day, no deadline, never carried over to today.
+- **Link cards.** Paste a GitHub or YouTube link into Xem sau and it files itself under a "GitHub" or "YouTube" heading. Repos show their description, stars, language, and topics; videos show their thumbnail, title, and channel. Click to open.
 - **Four kinds of blocks.** Type a prefix at the start of a line:
 
   | Prefix | Block |
@@ -33,9 +34,9 @@
 - **Nothing falls through.** Unfinished tasks from earlier days move to the top of today, marked with the day they came from.
 - **Count in the icon.** The menu bar icon shows how many tasks are left today, and goes blank when you're done.
 - **Focus timer.** A 15, 25, 45, or 60 minute countdown at the bottom of the popover. The time left runs next to the menu bar icon, and a sound plays when it's over.
-- **Settings.** Launch at login, global shortcut, menu bar count, carry-over, and accent color.
+- **Settings.** Language, launch at login, global shortcut, menu bar count, carry-over, light or dark mode, Liquid Glass on or off (off gives the classic look from before macOS 26), and accent color.
 
-The interface is in Vietnamese.
+The interface is in Vietnamese or English (Settings > Chung > Ngôn ngữ).
 
 ## Download
 
