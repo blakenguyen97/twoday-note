@@ -81,6 +81,11 @@ LanguageTests báo lỗi nếu một `L("…")` chưa có tiếng Anh.
 Cài đặt > Giao diện > Chế độ: Theo hệ thống, Sáng, hoặc Tối, đổi ngay cho
 popover và cửa sổ.
 
+Cài đặt > Giao diện > Liquid Glass: tắt thì app dùng giao diện cổ điển như
+trước macOS 26 (popover, tab, nút, menu), và thanh Hoàn tác là thanh thường
+thay vì kính. macOS chọn giao diện lúc app mở (khoá
+UIDesignRequiresCompatibility), nên đổi xong có nút "Mở lại" ngay dưới.
+
 ## Focus
 
 Đếm ngược kiểu Pomodoro ở đáy popover. Thời gian còn lại chạy cạnh icon

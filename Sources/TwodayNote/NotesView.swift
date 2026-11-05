@@ -735,7 +735,7 @@ private struct UndoBar: View {
             .padding(.horizontal, Space.lg)
             .frame(height: 32)
             // A floating control over content: the one place for glass.
-            .glassEffect(.regular, in: .capsule)
+            .floatingBackground(in: Capsule())
             .padding(Space.md)
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .task(id: undo.id) {

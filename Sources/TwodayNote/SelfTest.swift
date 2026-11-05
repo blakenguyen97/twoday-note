@@ -266,6 +266,7 @@ enum SelfTest {
             defaults.set(savedMode, forKey: Prefs.appearanceKey)
             try? await Task.sleep(for: .seconds(0.2))
             check("Theo hệ thống follows the Mac again", savedMode != nil || NSApp.appearance == nil)
+            check("macOS draws the design the Liquid Glass setting had at launch", LiquidGlass.isClassic == !LiquidGlass.isOn)
             Lang.override = .en
             check("English names the tabs in English", model.label(offset: AppModel.laterTab) == "Later"
                   && Progress.summary(remaining: 2, done: 1) == "2 to do · 1 done")

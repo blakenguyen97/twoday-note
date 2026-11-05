@@ -55,7 +55,7 @@ Snapshots in English: `APP_LANG=en tools/snap.sh`.
 - Every action is in the popover's ••• menu or a block's context menu, and frequent ones have a shortcut (docs/DESIGN.md, Command map).
 - `Label` for icon and text pairs. SF Symbols for icons.
 - `ContentUnavailableView` for empty states.
-- Liquid Glass belongs to floating controls only, never to content.
+- Liquid Glass belongs to floating controls only, never to content. Use `.floatingBackground(in:)` (`UI/LiquidGlass.swift`), not `.glassEffect`, so Settings > Giao diện > Liquid Glass off gives a plain bar. Snapshot the classic design with `-appearance.liquidGlass NO` after the binary.
 
 ## Skills
 

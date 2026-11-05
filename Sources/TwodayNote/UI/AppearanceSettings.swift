@@ -5,6 +5,7 @@ import TwodayNoteKit
 struct AppearanceSettings: View {
     @Bindable private var store = ThemeStore.shared
     @AppStorage(Prefs.appearanceKey) private var mode = AppearanceMode.system.rawValue
+    @AppStorage(LiquidGlass.key) private var liquidGlass = true
 
     var body: some View {
         Section(L("Giao diện")) {
@@ -12,6 +13,19 @@ struct AppearanceSettings: View {
                 ForEach(AppearanceMode.allCases) { Text($0.title).tag($0.rawValue) }
             }
             .pickerStyle(.segmented)
+            Toggle(isOn: $liquidGlass) {
+                Text("Liquid Glass")
+                Text(L("Tắt để dùng giao diện cổ điển, như trước macOS 26."))
+            }
+            if liquidGlass != LiquidGlass.isOn {
+                // macOS picks the design when the app starts.
+                LabeledContent {
+                    Button(L("Mở lại")) { LiquidGlass.relaunch() }
+                } label: {
+                    Text(L("Mở lại TwodayNote để áp dụng"))
+                        .foregroundStyle(.secondary)
+                }
+            }
             AccentPreview()
                 .padding(.vertical, Space.xs)
             LabeledContent(L("Màu nhấn")) {

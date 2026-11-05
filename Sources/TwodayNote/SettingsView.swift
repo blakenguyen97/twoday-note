@@ -12,7 +12,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         // Three short sections fit on a laptop screen without scrolling.
-        .fitsContent(max: 900)
+        .fitsContent(max: 960)
         .frame(width: 480)
         .noInitialFocus()
     }

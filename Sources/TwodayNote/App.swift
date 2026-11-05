@@ -15,6 +15,8 @@ import TwodayNoteKit
 @main
 enum TwodayNoteMain {
     static func main() {
+        // Before AppKit starts: it reads the design to use only once.
+        LiquidGlass.applyAtLaunch()
         let app = NSApplication.shared
         app.delegate = AppDelegate.shared
         app.run()
