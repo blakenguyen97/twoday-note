@@ -62,7 +62,7 @@ private struct DayHeader: View {
             // The brand stands apart from the day below it.
             .padding(.bottom, Space.xs)
             VStack(alignment: .leading, spacing: Space.xs) {
-                Text(model.isLater ? "Xem sau" : Day.long(model.selectedDay))
+                Text(model.isLater ? L("Xem sau") : Day.long(model.selectedDay))
                     .font(.title3.weight(.semibold))
                 Text(model.isLater ? Progress.later(count: model.visible.count { $0.kind != .heading })
                                    : Progress.summary(remaining: counts.remaining, done: counts.done))
@@ -70,7 +70,7 @@ private struct DayHeader: View {
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
             }
-            Picker("Ngày", selection: $model.dayOffset) {
+            Picker(L("Ngày"), selection: $model.dayOffset) {
                 ForEach(0...AppModel.laterTab, id: \.self) { offset in
                     Text(model.label(offset: offset)).tag(offset)
                 }
@@ -118,11 +118,11 @@ private struct MoreMenu: View {
 
     var body: some View {
         Menu {
-            Button("Xoá việc đã xong", systemImage: "checkmark.circle.badge.xmark") { model.clearDone() }
+            Button(L("Xoá việc đã xong"), systemImage: "checkmark.circle.badge.xmark") { model.clearDone() }
                 .disabled(!hasDone)
             Divider()
-            Button("Cài đặt…") { AppDelegate.shared.showSettings(nil) }
-            Button("Thoát TwodayNote") { NSApp.terminate(nil) }
+            Button(L("Cài đặt…")) { AppDelegate.shared.showSettings(nil) }
+            Button(L("Thoát TwodayNote")) { NSApp.terminate(nil) }
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.title3)
@@ -135,8 +135,8 @@ private struct MoreMenu: View {
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help("Thêm tuỳ chọn")
-        .accessibilityLabel("Thêm tuỳ chọn")
+        .help(L("Thêm tuỳ chọn"))
+        .accessibilityLabel(L("Thêm tuỳ chọn"))
     }
 }
 
@@ -162,7 +162,7 @@ private struct AddField: View {
         let text = text.projectedValue
         return HStack(spacing: Space.sm) {
             Menu {
-                Picker("Loại khối mới", selection: $model.newKind) {
+                Picker(L("Loại khối mới"), selection: $model.newKind) {
                     ForEach(EntryKind.allCases) { kind in
                         Label("\(kind.title)   \(kind.prefix)", systemImage: kind.symbol).tag(kind)
                     }
@@ -176,8 +176,8 @@ private struct AddField: View {
             .buttonStyle(.borderless)
             .menuIndicator(.hidden)
             .fixedSize()
-            .help("Loại khối mới. Gõ nhanh: “# ” tiêu đề, “- ” ghi chú, “* ” ý tưởng, “[] ” task. ⌘V dán ảnh")
-            .accessibilityLabel("Loại khối mới: \(model.newKind.title)")
+            .help(L("Loại khối mới. Gõ nhanh: “# ” tiêu đề, “- ” ghi chú, “* ” ý tưởng, “[] ” task. ⌘V dán ảnh"))
+            .accessibilityLabel(L("Loại khối mới: {}", model.newKind.title))
 
             TextField(model.newKind.placeholder, text: text)
                 .textFieldStyle(.plain)
@@ -227,16 +227,16 @@ private struct EntryList: View {
         .overlay {
             if entries.isEmpty, model.isLater {
                 ContentUnavailableView {
-                    Label("Chưa có gì để xem sau", systemImage: "tray")
+                    Label(L("Chưa có gì để xem sau"), systemImage: "tray")
                 } description: {
-                    Text("Link, đoạn trích, ảnh chụp màn hình vô tình gặp.\nKhông có hạn, không tự dời sang hôm nay.")
+                    Text(L("Link, đoạn trích, ảnh chụp màn hình vô tình gặp.\nKhông có hạn, không tự dời sang hôm nay."))
                 }
             } else if entries.isEmpty {
                 ContentUnavailableView {
-                    Label(model.dayOffset == 0 ? "Hôm nay chưa có gì" : "\(model.label(offset: model.dayOffset)) còn trống",
+                    Label(model.dayOffset == 0 ? L("Hôm nay chưa có gì") : L("{} còn trống", model.label(offset: model.dayOffset)),
                           systemImage: model.dayOffset == 0 ? "sun.max" : "calendar")
                 } description: {
-                    Text("Gõ vào ô phía trên rồi nhấn Return.\nBắt đầu bằng # để tạo tiêu đề, - ghi chú, * ý tưởng.")
+                    Text(L("Gõ vào ô phía trên rồi nhấn Return.\nBắt đầu bằng # để tạo tiêu đề, - ghi chú, * ý tưởng."))
                 }
             }
         }
@@ -322,13 +322,13 @@ private struct EntryRow: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
                     .fixedSize()
-                    .help("Quá hạn: chưa xong từ \(Day.long(from)), tự chuyển sang hôm nay")
+                    .help(L("Quá hạn: chưa xong từ {}, tự chuyển sang hôm nay", Day.long(from)))
             }
             if entry.isLater, entry.kind != .heading {
                 Text(Day.short(entry.createdAt))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
-                    .help("Lưu ngày \(Day.long(entry.createdAt))")
+                    .help(L("Lưu ngày {}", Day.long(entry.createdAt)))
             }
         }
     }
@@ -337,7 +337,7 @@ private struct EntryRow: View {
     private var leading: some View {
         switch entry.kind {
         case .task:
-            Toggle("Đã xong", isOn: Binding(get: { entry.isDone }, set: { _ in model.toggleDone(entry.id) }))
+            Toggle(L("Đã xong"), isOn: Binding(get: { entry.isDone }, set: { _ in model.toggleDone(entry.id) }))
                 .toggleStyle(.checkbox)
                 .labelsHidden()
         case .note:
@@ -373,12 +373,12 @@ private struct EntryRow: View {
     private var text: some View {
         if entry.isDone {
             // A task that was only an image keeps a word, not an empty line.
-            Text(entry.text.isEmpty ? "Ảnh" : entry.text)
+            Text(entry.text.isEmpty ? L("Ảnh") : entry.text)
                 .strikethrough()
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            TextField(entry.images.isEmpty ? entry.kind.title : "Thêm mô tả…",
+            TextField(entry.images.isEmpty ? entry.kind.title : L("Thêm mô tả…"),
                       text: draftState.projectedValue, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(entry.kind == .heading ? .title3.weight(.semibold) : .body)
@@ -396,37 +396,37 @@ private struct EntryMenu: View {
 
     var body: some View {
         if entry.link != nil {
-            Button("Mở link", systemImage: "arrow.up.forward.app") { model.openLink(entry) }
-            Button("Sao chép link", systemImage: "link") { model.copyLink(entry) }
+            Button(L("Mở link"), systemImage: "arrow.up.forward.app") { model.openLink(entry) }
+            Button(L("Sao chép link"), systemImage: "link") { model.copyLink(entry) }
             if let editText, !entry.isDone {
-                Button("Sửa chữ", systemImage: "pencil", action: editText)
+                Button(L("Sửa chữ"), systemImage: "pencil", action: editText)
             }
             Divider()
         }
         if entry.kind == .task {
-            Button(entry.isDone ? "Đánh dấu chưa xong" : "Đánh dấu đã xong") { model.toggleDone(entry.id) }
+            Button(entry.isDone ? L("Đánh dấu chưa xong") : L("Đánh dấu đã xong")) { model.toggleDone(entry.id) }
         }
         if !entry.isDone {
-            Button("Dán ảnh", systemImage: "photo.badge.plus") {
+            Button(L("Dán ảnh"), systemImage: "photo.badge.plus") {
                 if !model.pasteImages(into: entry.id) { NSSound.beep() }
             }
         }
-        Menu("Chuyển thành") {
+        Menu(L("Chuyển thành")) {
             ForEach(EntryKind.allCases.filter { $0 != entry.kind }) { kind in
                 Button(kind.title, systemImage: kind.symbol) { model.setKind(entry.id, kind) }
             }
         }
-        Menu("Dời sang") {
+        Menu(L("Dời sang")) {
             ForEach((0..<AppModel.dayCount).filter { entry.isLater || Day.adding($0, to: model.today) != entry.day }, id: \.self) { offset in
                 Button(model.label(offset: offset)) { model.move(entry.id, toOffset: offset) }
             }
             if !entry.isLater {
                 Divider()
-                Button("Xem sau", systemImage: "tray") { model.moveToLater(entry.id) }
+                Button(L("Xem sau"), systemImage: "tray") { model.moveToLater(entry.id) }
             }
         }
         Divider()
-        Button("Xoá", role: .destructive) { model.delete(entry.id) }
+        Button(L("Xoá"), role: .destructive) { model.delete(entry.id) }
     }
 }
 
@@ -475,15 +475,15 @@ private struct ImageStrip: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .help("Bấm để xem lớn")
-        .accessibilityLabel("Ảnh, bấm để xem lớn")
+        .help(L("Bấm để xem lớn"))
+        .accessibilityLabel(L("Ảnh, bấm để xem lớn"))
         .contextMenu {
-            Button("Xem lớn", systemImage: "arrow.up.left.and.arrow.down.right") {
+            Button(L("Xem lớn"), systemImage: "arrow.up.left.and.arrow.down.right") {
                 model.viewer = ImageViewer(entryID: entryID, name: name)
             }
-            Button("Sao chép ảnh", systemImage: "doc.on.doc") { ImageStore.copy(name) }
+            Button(L("Sao chép ảnh"), systemImage: "doc.on.doc") { ImageStore.copy(name) }
             Divider()
-            Button("Xoá ảnh", systemImage: "trash", role: .destructive) { remove(name) }
+            Button(L("Xoá ảnh"), systemImage: "trash", role: .destructive) { remove(name) }
         }
     }
 
@@ -506,26 +506,26 @@ private struct ImageViewerView: View {
         let index = names.firstIndex(of: viewer.name) ?? 0
         VStack(spacing: 0) {
             HStack(spacing: Space.sm) {
-                iconButton("Đóng", "xmark") { model.viewer = nil }
+                iconButton(L("Đóng"), "xmark") { model.viewer = nil }
                     .keyboardShortcut(.cancelAction)
                 Spacer(minLength: Space.sm)
                 if names.count > 1 {
-                    iconButton("Ảnh trước", "chevron.left") { step(-1) }
+                    iconButton(L("Ảnh trước"), "chevron.left") { step(-1) }
                         .keyboardShortcut(.leftArrow, modifiers: [])
                         .disabled(index == 0)
                     Text("\(index + 1) / \(names.count)")
                         .font(.callout.monospacedDigit())
                         .foregroundStyle(.secondary)
-                    iconButton("Ảnh sau", "chevron.right") { step(1) }
+                    iconButton(L("Ảnh sau"), "chevron.right") { step(1) }
                         .keyboardShortcut(.rightArrow, modifiers: [])
                         .disabled(index == names.count - 1)
                 }
                 Spacer(minLength: Space.sm)
-                iconButton("Mở bằng Xem trước", "arrow.up.forward.app") {
+                iconButton(L("Mở bằng Xem trước"), "arrow.up.forward.app") {
                     if let name = model.viewer?.name { NSWorkspace.shared.open(ImageStore.url(name)) }
                 }
-                iconButton("Sao chép ảnh", "doc.on.doc") { if let name = model.viewer?.name { ImageStore.copy(name) } }
-                iconButton("Xoá ảnh", "trash") { removeShown() }
+                iconButton(L("Sao chép ảnh"), "doc.on.doc") { if let name = model.viewer?.name { ImageStore.copy(name) } }
+                iconButton(L("Xoá ảnh"), "trash") { removeShown() }
             }
             .frame(height: Space.section)
             .padding([.horizontal, .top], Space.lg)
@@ -585,7 +585,7 @@ private struct ZoomArea: View {
             ZoomableImage(image: image, control: control)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ContentUnavailableView("Không mở được ảnh", systemImage: "photo")
+            ContentUnavailableView(L("Không mở được ảnh"), systemImage: "photo")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
@@ -597,20 +597,20 @@ private struct ZoomBar: View {
 
     var body: some View {
         HStack(spacing: Space.md) {
-            Button("Thu nhỏ", systemImage: "minus.magnifyingglass") { control.zoomOut() }
+            Button(L("Thu nhỏ"), systemImage: "minus.magnifyingglass") { control.zoomOut() }
                 .keyboardShortcut("-", modifiers: .command)
                 .disabled(control.isFitted)
-                .help("Thu nhỏ (⌘-)")
+                .help(L("Thu nhỏ (⌘-)"))
             Button("\(control.percent) %") { control.fit() }
                 .keyboardShortcut("0", modifiers: .command)
                 .font(.callout.monospacedDigit())
                 .foregroundStyle(.secondary)
                 .disabled(control.isFitted)
-                .help("Vừa khung (⌘0)")
-            Button("Phóng to", systemImage: "plus.magnifyingglass") { control.zoomIn() }
+                .help(L("Vừa khung (⌘0)"))
+            Button(L("Phóng to"), systemImage: "plus.magnifyingglass") { control.zoomIn() }
                 .keyboardShortcut("=", modifiers: .command)
                 .disabled(!control.canZoomIn)
-                .help("Phóng to (⌘=), hoặc ⌃ + lăn chuột, hoặc nhấp đúp vào ảnh")
+                .help(L("Phóng to (⌘=), hoặc ⌃ + lăn chuột, hoặc nhấp đúp vào ảnh"))
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
@@ -645,15 +645,15 @@ private struct FocusBar: View {
     private func status(now: Date) -> some View {
         switch model.focus.phase {
         case .idle:
-            Text("Tập trung")
+            Text(L("Tập trung"))
             Menu {
-                Picker("Thời lượng", selection: $minutes) {
-                    ForEach(FocusClock.choices, id: \.self) { Text("\($0) phút").tag($0) }
+                Picker(L("Thời lượng"), selection: $minutes) {
+                    ForEach(FocusClock.choices, id: \.self) { Text(L("{} phút", $0)).tag($0) }
                 }
                 .pickerStyle(.inline)
             } label: {
                 HStack(spacing: Space.xs) {
-                    Text("\(minutes) phút")
+                    Text(L("{} phút", minutes))
                         .foregroundStyle(.primary)
                     Image(systemName: "chevron.down")
                         .font(.caption2.weight(.semibold))
@@ -666,8 +666,8 @@ private struct FocusBar: View {
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize()
-            .help("Thời lượng một phiên tập trung")
-            .accessibilityLabel("Thời lượng: \(minutes) phút")
+            .help(L("Thời lượng một phiên tập trung"))
+            .accessibilityLabel(L("Thời lượng: {} phút", minutes))
         case .running, .paused:
             Text(FocusClock.format(model.focus.remaining(now: now) ?? 0))
                 .font(.title3.monospacedDigit().weight(.semibold))
@@ -676,12 +676,12 @@ private struct FocusBar: View {
             ProgressView(value: model.focus.progress(now: now))
                 .progressViewStyle(.linear)
                 .frame(width: 64)
-                .accessibilityLabel("Tiến độ phiên tập trung")
+                .accessibilityLabel(L("Tiến độ phiên tập trung"))
             if model.focus.isPaused {
-                Text("Tạm dừng").font(.caption).foregroundStyle(.secondary)
+                Text(L("Tạm dừng")).font(.caption).foregroundStyle(.secondary)
             }
         case .finished:
-            Text("Hết giờ! Nghỉ chút nhé.")
+            Text(L("Hết giờ! Nghỉ chút nhé."))
         }
     }
 
@@ -689,20 +689,20 @@ private struct FocusBar: View {
     private var controls: some View {
         switch model.focus.phase {
         case .idle:
-            Button("Bắt đầu", systemImage: "play.fill") { model.focus.start(minutes: minutes) }
+            Button(L("Bắt đầu"), systemImage: "play.fill") { model.focus.start(minutes: minutes) }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
         case .running:
-            iconButton("Tạm dừng", "pause.fill") { model.focus.pause() }
-            iconButton("Dừng", "stop.fill") { model.focus.stop() }
+            iconButton(L("Tạm dừng"), "pause.fill") { model.focus.pause() }
+            iconButton(L("Dừng"), "stop.fill") { model.focus.stop() }
         case .paused:
-            iconButton("Tiếp tục", "play.fill") { model.focus.resume() }
-            iconButton("Dừng", "stop.fill") { model.focus.stop() }
+            iconButton(L("Tiếp tục"), "play.fill") { model.focus.resume() }
+            iconButton(L("Dừng"), "stop.fill") { model.focus.stop() }
         case .finished:
-            Button("Phiên mới", systemImage: "arrow.clockwise") { model.focus.start(minutes: minutes) }
+            Button(L("Phiên mới"), systemImage: "arrow.clockwise") { model.focus.start(minutes: minutes) }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-            iconButton("Đóng", "xmark") { model.focus.stop() }
+            iconButton(L("Đóng"), "xmark") { model.focus.stop() }
         }
     }
 
@@ -727,7 +727,7 @@ private struct UndoBar: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer(minLength: Space.sm)
-                Button("Hoàn tác") { model.undoRemoval() }
+                Button(L("Hoàn tác")) { model.undoRemoval() }
                     .buttonStyle(.borderless)
                     .foregroundStyle(Palette.accentText)
             }

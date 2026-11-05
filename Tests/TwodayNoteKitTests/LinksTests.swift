@@ -102,10 +102,10 @@ func editsLink() {
     let entry = book.add("Chưa có link", defaultKind: .note, day: .now)!
     let i = book.index(of: entry.id)!
     book.entries[i].text = "https://youtu.be/dQw4w9WgXcQ"
-    book.commitText(entry.id)
+    _ = book.commitText(entry.id)
     #expect(book.entries[i].link?.site == .youtube)
     book.entries[i].text = "Hết link"
-    book.commitText(entry.id)
+    _ = book.commitText(entry.id)
     #expect(book.entries[i].link == nil)
 }
 

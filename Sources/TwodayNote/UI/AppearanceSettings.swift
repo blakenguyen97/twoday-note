@@ -1,14 +1,20 @@
 import SwiftUI
+import TwodayNoteKit
 
-/// Settings > Appearance: the accent color. Light and dark mode follow the Mac.
+/// Settings > Appearance: light, dark, or the Mac's mode, and the accent color.
 struct AppearanceSettings: View {
     @Bindable private var store = ThemeStore.shared
+    @AppStorage(Prefs.appearanceKey) private var mode = AppearanceMode.system.rawValue
 
     var body: some View {
-        Section("Giao diện") {
+        Section(L("Giao diện")) {
+            Picker(L("Chế độ"), selection: $mode) {
+                ForEach(AppearanceMode.allCases) { Text($0.title).tag($0.rawValue) }
+            }
+            .pickerStyle(.segmented)
             AccentPreview()
                 .padding(.vertical, Space.xs)
-            LabeledContent("Màu nhấn") {
+            LabeledContent(L("Màu nhấn")) {
                 VStack(alignment: .trailing, spacing: Space.xs) {
                     HStack(spacing: Space.sm) {
                         ForEach(Theme.all) { theme in
@@ -38,13 +44,13 @@ private struct AccentPreview: View {
             Divider()
             content
         }
-        .frame(height: 152)
+        .frame(height: 128)
         .background(.background, in: shape)
         .clipShape(shape)
         .overlay(shape.strokeBorder(.separator, lineWidth: 1))
         .allowsHitTesting(false)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Xem trước màu nhấn")
+        .accessibilityLabel(L("Xem trước màu nhấn"))
     }
 
     private var sidebar: some View {
@@ -56,9 +62,9 @@ private struct AccentPreview: View {
             }
             .padding(.leading, Space.xs)
             .padding(.bottom, Space.sm)
-            sidebarRow("Hôm nay", symbol: "tray", selected: true)
-            sidebarRow("Ngày mai", symbol: "calendar", selected: false)
-            sidebarRow("Đã xong", symbol: "checkmark.circle", selected: false)
+            sidebarRow(L("Hôm nay"), symbol: "tray", selected: true)
+            sidebarRow(L("Ngày mai"), symbol: "calendar", selected: false)
+            sidebarRow(L("Đã xong"), symbol: "checkmark.circle", selected: false)
             Spacer(minLength: 0)
         }
         .padding(Space.sm)
@@ -79,24 +85,24 @@ private struct AccentPreview: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: Space.sm) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Hôm nay").font(.headline)
+                Text(L("Hôm nay")).font(.headline)
                 Spacer()
-                Text("còn 1").font(.caption).foregroundStyle(Palette.accentText)
+                Text(L("còn 1")).font(.caption).foregroundStyle(Palette.accentText)
             }
-            task("Chọn màu nhấn", done: true)
-            task("Gửi bản build đầu tiên", done: false, tag: "Hôm nay")
+            task(L("Chọn màu nhấn"), done: true)
+            task(L("Gửi bản build đầu tiên"), done: false, tag: L("Hôm nay"))
             Spacer(minLength: 0)
             // Drawn, not real controls: the preview is a picture, and real
             // controls turn gray when the window is not in front.
             HStack {
-                Label("Thêm task", systemImage: "plus")
+                Label(L("Thêm task"), systemImage: "plus")
                     .font(.callout.weight(.medium))
                     .foregroundStyle(Palette.onAccent)
                     .padding(.horizontal, Space.md)
                     .frame(height: 24)
                     .background(Palette.accent, in: Capsule())
                 Spacer()
-                Text("Tập trung").font(.caption).foregroundStyle(.secondary)
+                Text(L("Tập trung")).font(.caption).foregroundStyle(.secondary)
                 Capsule()
                     .fill(Palette.accent)
                     .frame(width: 28, height: 16)

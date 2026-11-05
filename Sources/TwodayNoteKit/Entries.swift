@@ -9,9 +9,9 @@ public enum EntryKind: String, CaseIterable, Identifiable, Sendable {
     public var title: String {
         switch self {
         case .task: "Task"
-        case .note: "Ghi chú"
-        case .idea: "Ý tưởng"
-        case .heading: "Tiêu đề"
+        case .note: L("Ghi chú")
+        case .idea: L("Ý tưởng")
+        case .heading: L("Tiêu đề")
         }
     }
 
@@ -36,10 +36,10 @@ public enum EntryKind: String, CaseIterable, Identifiable, Sendable {
 
     public var placeholder: String {
         switch self {
-        case .task: "Thêm việc cần làm…"
-        case .note: "Thêm ghi chú…"
-        case .idea: "Thêm ý tưởng…"
-        case .heading: "Thêm tiêu đề…"
+        case .task: L("Thêm việc cần làm…")
+        case .note: L("Thêm ghi chú…")
+        case .idea: L("Thêm ý tưởng…")
+        case .heading: L("Thêm tiêu đề…")
         }
     }
 }
@@ -87,34 +87,43 @@ public enum Day {
         calendar.date(byAdding: .day, value: days, to: start(of: date, calendar: calendar)) ?? date
     }
 
-    /// "Hôm nay", "Ngày mai", then the weekday: "Thứ Bảy".
-    public static func label(offset: Int, today: Date, calendar: Calendar = .current) -> String {
+    /// "Hôm nay", "Ngày mai", then the weekday: "Thứ Bảy". In English
+    /// "Today", "Tomorrow", "Saturday".
+    public static func label(offset: Int, today: Date, calendar: Calendar = .current, lang: Lang = .current) -> String {
         switch offset {
-        case 0: "Hôm nay"
-        case 1: "Ngày mai"
-        case -1: "Hôm qua"
-        default: weekday(adding(offset, to: today, calendar: calendar), calendar: calendar)
+        case 0: lang == .en ? "Today" : "Hôm nay"
+        case 1: lang == .en ? "Tomorrow" : "Ngày mai"
+        case -1: lang == .en ? "Yesterday" : "Hôm qua"
+        default: weekday(adding(offset, to: today, calendar: calendar), calendar: calendar, lang: lang)
         }
     }
 
-    /// "Thứ Năm", "Chủ Nhật".
-    public static func weekday(_ date: Date, calendar: Calendar = .current) -> String {
-        switch calendar.component(.weekday, from: date) {
-        case 1: "Chủ Nhật"
-        case let day: "Thứ \(["Hai", "Ba", "Tư", "Năm", "Sáu", "Bảy"][day - 2])"
-        }
-    }
-
-    /// "T5", "CN": the short form next to a carried task.
-    public static func shortWeekday(_ date: Date, calendar: Calendar = .current) -> String {
+    /// "Thứ Năm", "Chủ Nhật"; "Thursday".
+    public static func weekday(_ date: Date, calendar: Calendar = .current, lang: Lang = .current) -> String {
         let day = calendar.component(.weekday, from: date)
+        if lang == .en {
+            return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day - 1]
+        }
+        return day == 1 ? "Chủ Nhật" : "Thứ \(["Hai", "Ba", "Tư", "Năm", "Sáu", "Bảy"][day - 2])"
+    }
+
+    /// "T5", "CN"; "Thu": the short form next to a carried task.
+    public static func shortWeekday(_ date: Date, calendar: Calendar = .current, lang: Lang = .current) -> String {
+        let day = calendar.component(.weekday, from: date)
+        if lang == .en { return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day - 1] }
         return day == 1 ? "CN" : "T\(day)"
     }
 
-    /// "Thứ Năm, 5 tháng 11".
-    public static func long(_ date: Date, calendar: Calendar = .current) -> String {
+    /// "Thứ Năm, 5 tháng 11"; "Thursday, November 5".
+    public static func long(_ date: Date, calendar: Calendar = .current, lang: Lang = .current) -> String {
         let parts = calendar.dateComponents([.day, .month], from: date)
-        return "\(weekday(date, calendar: calendar)), \(parts.day ?? 1) tháng \(parts.month ?? 1)"
+        let day = parts.day ?? 1, month = parts.month ?? 1
+        if lang == .en {
+            let months = ["January", "February", "March", "April", "May", "June", "July",
+                          "August", "September", "October", "November", "December"]
+            return "\(weekday(date, calendar: calendar, lang: lang)), \(months[month - 1]) \(day)"
+        }
+        return "\(weekday(date, calendar: calendar, lang: lang)), \(day) tháng \(month)"
     }
 
     /// Whole days from `day` to `today`: 1 for yesterday.
@@ -122,16 +131,22 @@ public enum Day {
         calendar.dateComponents([.day], from: start(of: day, calendar: calendar), to: start(of: today, calendar: calendar)).day ?? 0
     }
 
-    /// Beside a carried task: "từ T4" a day late, "trễ 3 ngày" when longer.
-    public static func lateLabel(from day: Date, today: Date, calendar: Calendar = .current) -> String {
+    /// Beside a carried task: "từ T4" a day late, "trễ 3 ngày" when longer;
+    /// "since Wed", "3 days late".
+    public static func lateLabel(from day: Date, today: Date, calendar: Calendar = .current, lang: Lang = .current) -> String {
         let late = daysLate(from: day, today: today, calendar: calendar)
-        return late > 1 ? "trễ \(late) ngày" : "từ \(shortWeekday(day, calendar: calendar))"
+        let weekday = shortWeekday(day, calendar: calendar, lang: lang)
+        switch lang {
+        case .vi: return late > 1 ? "trễ \(late) ngày" : "từ \(weekday)"
+        case .en: return late > 1 ? "\(late) days late" : "since \(weekday)"
+        }
     }
 
-    /// "5/11": the day a Xem sau block was saved.
-    public static func short(_ date: Date, calendar: Calendar = .current) -> String {
+    /// "5/11"; "11/5": the day a Xem sau block was saved.
+    public static func short(_ date: Date, calendar: Calendar = .current, lang: Lang = .current) -> String {
         let parts = calendar.dateComponents([.day, .month], from: date)
-        return "\(parts.day ?? 1)/\(parts.month ?? 1)"
+        let day = parts.day ?? 1, month = parts.month ?? 1
+        return lang == .en ? "\(month)/\(day)" : "\(day)/\(month)"
     }
 
     /// A task that is not done and belongs to a day before today moves to today.
@@ -144,15 +159,15 @@ public enum Day {
 public enum Progress {
     public static func summary(remaining: Int, done: Int) -> String {
         switch (remaining, done) {
-        case (0, 0): "Chưa có việc nào"
-        case (0, _): "Xong hết \(done) việc"
-        case (_, 0): "Còn \(remaining) việc"
-        default: "Còn \(remaining) việc · xong \(done)"
+        case (0, 0): L("Chưa có việc nào")
+        case (0, _): L("Xong hết {} việc", done)
+        case (_, 0): L("Còn {} việc", remaining)
+        default: L("Còn {} việc · xong {}", remaining, done)
         }
     }
 
     /// The line under the Xem sau title.
     public static func later(count: Int) -> String {
-        count == 0 ? "Không gấp, không hạn, xem khi rảnh" : "\(count) mục để xem khi rảnh"
+        count == 0 ? L("Không gấp, không hạn, xem khi rảnh") : L("{} mục để xem khi rảnh", count)
     }
 }

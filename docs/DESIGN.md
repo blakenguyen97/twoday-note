@@ -70,6 +70,17 @@ gom nhóm.
 | Cài đặt | menu ••• | ⌘, |
 | Thoát | menu ••• | ⌘Q |
 
+## Ngôn ngữ và giao diện
+
+Cài đặt > Chung > Ngôn ngữ: Tiếng Việt (mặc định) hoặc English. Đổi là popover,
+Cài đặt và menu đổi ngay, không cần mở lại app; ghi chú của người dùng giữ
+nguyên. Mọi chữ của app đi qua `L("…")` (TwodayNoteKit/Language.swift): khoá là
+câu tiếng Việt, bảng `Strings.en` có câu tiếng Anh, `{}` là chỗ điền số hoặc tên.
+LanguageTests báo lỗi nếu một `L("…")` chưa có tiếng Anh.
+
+Cài đặt > Giao diện > Chế độ: Theo hệ thống, Sáng, hoặc Tối, đổi ngay cho
+popover và cửa sổ.
+
 ## Focus
 
 Đếm ngược kiểu Pomodoro ở đáy popover. Thời gian còn lại chạy cạnh icon

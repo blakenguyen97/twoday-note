@@ -12,7 +12,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         // Three short sections fit on a laptop screen without scrolling.
-        .fitsContent(max: 840)
+        .fitsContent(max: 900)
         .frame(width: 480)
         .noInitialFocus()
     }
@@ -22,6 +22,7 @@ struct GeneralSettings: View {
     @AppStorage(Prefs.carryOverKey) private var carryOver = true
     @AppStorage(Prefs.showCountKey) private var showCount = true
     @AppStorage(Prefs.hotKeyKey) private var hotKey = true
+    @AppStorage(Lang.key) private var language = Lang.vi.rawValue
     // State as a stored property: the @State macro needs Xcode (see CLAUDE.md).
     private let launchState = State(initialValue: LaunchAtLogin.isEnabled)
     private let errorState = State<String?>(initialValue: nil)
@@ -37,9 +38,13 @@ struct GeneralSettings: View {
     }
 
     var body: some View {
-        Section("Chung") {
+        Section(L("Chung")) {
+            // Each language's name in itself, so people find theirs.
+            Picker(L("Ngôn ngữ"), selection: $language) {
+                ForEach(Lang.allCases) { Text($0.name).tag($0.rawValue) }
+            }
             Toggle(isOn: launchState.projectedValue) {
-                Text("Mở cùng macOS")
+                Text(L("Mở cùng macOS"))
                 if let loginError {
                     Text(loginError).foregroundStyle(.red)
                 }
@@ -49,18 +54,18 @@ struct GeneralSettings: View {
                     try LaunchAtLogin.set(on)
                     loginError = nil
                 } catch {
-                    loginError = "Không bật được: \(error.localizedDescription)"
+                    loginError = L("Không bật được: {}", error.localizedDescription)
                     launchAtLogin = LaunchAtLogin.isEnabled
                 }
             }
             Toggle(isOn: $hotKey) {
-                Text("Phím tắt toàn cục ⌃⌥N")
-                Text("Mở và đóng TwodayNote từ bất kỳ app nào.")
+                Text(L("Phím tắt toàn cục ⌃⌥N"))
+                Text(L("Mở và đóng TwodayNote từ bất kỳ app nào."))
             }
-            Toggle("Hiện số việc còn lại trên thanh menu", isOn: $showCount)
+            Toggle(L("Hiện số việc còn lại trên thanh menu"), isOn: $showCount)
             Toggle(isOn: $carryOver) {
-                Text("Chuyển việc chưa xong sang hôm nay")
-                Text("Task chưa tick của những ngày trước tự lên đầu danh sách hôm nay.")
+                Text(L("Chuyển việc chưa xong sang hôm nay"))
+                Text(L("Task chưa tick của những ngày trước tự lên đầu danh sách hôm nay."))
             }
         }
     }
@@ -69,13 +74,13 @@ struct GeneralSettings: View {
 /// Teaches the shortcuts and typing prefixes (mac-design: keyboard first).
 private struct ShortcutList: View {
     var body: some View {
-        Section("Phím tắt và gõ nhanh") {
-            row("Mở / đóng TwodayNote", "⌃⌥N")
-            row("Hôm nay · Ngày mai · Xem sau", "⌘1 ⌘2 ⌘3")
-            row("Thêm khối", "Return")
-            row("Đóng", "Esc")
-            LabeledContent("Gõ ở đầu dòng") {
-                Text("# tiêu đề  - ghi chú  * ý tưởng  [] task")
+        Section(L("Phím tắt và gõ nhanh")) {
+            row(L("Mở / đóng TwodayNote"), "⌃⌥N")
+            row(L("Hôm nay · Ngày mai · Xem sau"), "⌘1 ⌘2 ⌘3")
+            row(L("Thêm khối"), "Return")
+            row(L("Đóng"), "Esc")
+            LabeledContent(L("Gõ ở đầu dòng")) {
+                Text(L("# tiêu đề  - ghi chú  * ý tưởng  [] task"))
                     .foregroundStyle(.secondary)
             }
         }

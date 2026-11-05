@@ -1,4 +1,5 @@
 import AppKit
+import TwodayNoteKit
 
 /// The menu bar icon: the app icon's two stacked cards, with today's count
 /// of unfinished tasks cut out of the front one. No number when everything
@@ -42,7 +43,7 @@ enum StatusIcon {
             return true
         }
         image.isTemplate = true
-        image.accessibilityDescription = label.map { "TwodayNote, còn \($0) việc" } ?? "TwodayNote"
+        image.accessibilityDescription = label.map { L("TwodayNote, còn {} việc", $0) } ?? "TwodayNote"
         return image
     }
 

@@ -62,7 +62,7 @@ final class AppModel {
     var selectedDay: Date { Day.adding(dayOffset, to: today) }
     var visible: [Entry] { isLater ? book.laterEntries : book.entries(on: selectedDay) }
     func label(offset: Int) -> String {
-        offset == Self.laterTab ? "Xem sau" : Day.label(offset: offset, today: today)
+        offset == Self.laterTab ? L("Xem sau") : Day.label(offset: offset, today: today)
     }
     var todayCounts: (remaining: Int, done: Int) { book.counts(on: today) }
 
@@ -117,7 +117,7 @@ final class AppModel {
     /// Finishing a task deletes its images, with Undo.
     func toggleDone(_ id: UUID) {
         if let before = book.toggleDone(id) {
-            undo = UndoNotice(message: "Đã xong, xoá \(before.images.count) ảnh", entries: [before])
+            undo = UndoNotice(message: L("Đã xong, xoá {} ảnh", before.images.count), entries: [before])
         }
         changed()
     }
@@ -143,7 +143,7 @@ final class AppModel {
     func removeImage(_ name: String, from id: UUID) {
         guard let before = book.detach(name, from: id) else { return }
         if viewer?.name == name { viewer = nil }
-        undo = UndoNotice(message: "Đã xoá ảnh", entries: [before])
+        undo = UndoNotice(message: L("Đã xoá ảnh"), entries: [before])
         changed()
     }
 
@@ -204,7 +204,7 @@ final class AppModel {
     /// After editing: tidies the text, or removes the block when it is empty.
     func commitText(_ id: UUID) {
         if let removed = book.commitText(id) {
-            undo = UndoNotice(message: "Đã xoá khối trống", entries: [removed])
+            undo = UndoNotice(message: L("Đã xoá khối trống"), entries: [removed])
         }
         changed()
         fetchLinks()
@@ -213,7 +213,7 @@ final class AppModel {
     func delete(_ id: UUID) {
         let removed = book.remove([id])
         guard let first = removed.first else { return }
-        undo = UndoNotice(message: "Đã xoá “\(first.text.prefix(24))”", entries: removed)
+        undo = UndoNotice(message: L("Đã xoá “{}”", first.text.prefix(24)), entries: removed)
         changed()
     }
 
@@ -221,7 +221,7 @@ final class AppModel {
         let done = Set(visible.filter(\.isDone).map(\.id))
         guard !done.isEmpty else { return }
         let removed = book.remove(done)
-        undo = UndoNotice(message: "Đã xoá \(removed.count) việc đã xong", entries: removed)
+        undo = UndoNotice(message: L("Đã xoá {} việc đã xong", removed.count), entries: removed)
         changed()
     }
 
@@ -285,11 +285,39 @@ enum Prefs {
     static let carryOverKey = "carryOver"
     static let showCountKey = "showCountInMenuBar"
     static let hotKeyKey = "globalHotKey"
+    static let appearanceKey = "appearance.mode"
 
     static var carryOver: Bool { UserDefaults.standard.object(forKey: carryOverKey) as? Bool ?? true }
     static var showCount: Bool { UserDefaults.standard.object(forKey: showCountKey) as? Bool ?? true }
     static var hotKey: Bool { UserDefaults.standard.object(forKey: hotKeyKey) as? Bool ?? true }
     static var focusMinutes: Int { UserDefaults.standard.object(forKey: focusMinutesKey) as? Int ?? 25 }
+    static var appearance: AppearanceMode {
+        UserDefaults.standard.string(forKey: appearanceKey).flatMap(AppearanceMode.init) ?? .system
+    }
+}
+
+/// Settings > Giao diện > Chế độ: follow the Mac, or always light or dark.
+enum AppearanceMode: String, CaseIterable, Identifiable {
+    case system, light, dark
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .system: L("Theo hệ thống")
+        case .light: L("Sáng")
+        case .dark: L("Tối")
+        }
+    }
+
+    /// Nil follows the Mac.
+    var appearance: NSAppearance? {
+        switch self {
+        case .system: nil
+        case .light: NSAppearance(named: .aqua)
+        case .dark: NSAppearance(named: .darkAqua)
+        }
+    }
 }
 
 /// Where the data lives: ~/Library/Application Support/TwodayNote/notes.json

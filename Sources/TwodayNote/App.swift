@@ -31,6 +31,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var settingsWindow: NSWindow?
     /// The number drawn in the menu bar icon, so it redraws only on change.
     private var shownCount = 0
+    /// The language and mode last applied, so a Settings change is seen once.
+    private var shownLang = Lang.current
+    private var shownMode: AppearanceMode?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -47,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let content = NotesView()
             .environment(model)
             .themed()
+            .localized()
             .overlay { if GridOverlay.enabled { GridOverlay() } }
         let host = NSHostingController(rootView: content)
         host.sizingOptions = [.preferredContentSize]
@@ -115,10 +119,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     @objc func showSettings(_ sender: Any?) {
         if settingsWindow == nil {
-            let host = NSHostingController(rootView: SettingsView().environment(model).themed())
+            let host = NSHostingController(rootView: SettingsView().environment(model).themed().localized())
             host.sizingOptions = [.preferredContentSize]
             let window = NSWindow(contentViewController: host)
-            window.title = "Cài đặt TwodayNote"
+            window.title = L("Cài đặt TwodayNote")
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
             window.center()
@@ -182,7 +186,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         if let remaining = model.focus.remaining() {
             text = FocusClock.format(remaining)
         } else {
-            text = model.focus.isFinished ? "Hết giờ" : nil
+            text = model.focus.isFinished ? L("Hết giờ") : nil
         }
         guard let text else {
             button.title = ""
@@ -206,6 +210,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func applyPrefs() {
+        if Lang.current != shownLang {
+            shownLang = Lang.current
+            NSApp.mainMenu = MainMenu.make()
+            settingsWindow?.title = L("Cài đặt TwodayNote")
+            // Redraws the icon, whose description has the count in words.
+            shownCount = -1
+        }
+        // Snapshots set light and dark themselves.
+        if Prefs.appearance != shownMode, ProcessInfo.processInfo.environment["APP_SNAPSHOT"] == nil {
+            shownMode = Prefs.appearance
+            NSApp.appearance = Prefs.appearance.appearance
+            popover.appearance = NSApp.appearance
+        }
         updateStatusTitle()
         if Prefs.hotKey, hotKey == nil, !Store.isOverridden {
             // ⌃⌥N opens and closes the popover from any app.
@@ -219,6 +236,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 }
 
+extension View {
+    /// Rebuilds the view in the new language when Settings changes it.
+    func localized() -> some View {
+        modifier(Localized())
+    }
+}
+
+private struct Localized: ViewModifier {
+    @AppStorage(Lang.key) private var language = Lang.vi.rawValue
+
+    func body(content: Content) -> some View {
+        content
+            .id(language)
+            .environment(\.locale, Lang.current.locale)
+    }
+}
+
 /// The app menu is never visible (no Dock icon), but its shortcuts still
 /// work while the popover is open: Edit gives text fields ⌘C, ⌘V, ⌘Z.
 enum MainMenu {
@@ -226,20 +260,20 @@ enum MainMenu {
         let main = NSMenu()
 
         let app = NSMenu(title: "TwodayNote")
-        app.addItem(withTitle: "Cài đặt…", action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
+        app.addItem(withTitle: L("Cài đặt…"), action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
         app.addItem(.separator())
-        app.addItem(withTitle: "Thoát TwodayNote", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        app.addItem(withTitle: L("Thoát TwodayNote"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         main.addItem(submenu: app)
 
-        let edit = NSMenu(title: "Sửa")
-        edit.addItem(withTitle: "Hoàn tác", action: Selector(("undo:")), keyEquivalent: "z")
-        edit.addItem(withTitle: "Làm lại", action: Selector(("redo:")), keyEquivalent: "Z")
+        let edit = NSMenu(title: L("Sửa"))
+        edit.addItem(withTitle: L("Hoàn tác"), action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: L("Làm lại"), action: Selector(("redo:")), keyEquivalent: "Z")
         edit.addItem(.separator())
-        edit.addItem(withTitle: "Cắt", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        edit.addItem(withTitle: "Sao chép", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: L("Cắt"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: L("Sao chép"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
         // Images or text: AppDelegate.pasteNote decides.
-        edit.addItem(withTitle: "Dán", action: #selector(AppDelegate.pasteNote(_:)), keyEquivalent: "v")
-        edit.addItem(withTitle: "Chọn tất cả", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        edit.addItem(withTitle: L("Dán"), action: #selector(AppDelegate.pasteNote(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: L("Chọn tất cả"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         main.addItem(submenu: edit)
         return main
     }

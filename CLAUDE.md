@@ -3,7 +3,11 @@
 A menu bar app for quick tasks, notes, and ideas for today and tomorrow,
 plus a Xem sau list of things to look at later. SwiftUI in an AppKit shell: `NSStatusItem` + `NSPopover`, no Dock icon
 (`LSUIElement`), no main window. Data is one JSON file, no server.
-Design plan: `docs/DESIGN.md`. UI text is Vietnamese.
+Design plan: `docs/DESIGN.md`. UI text is Vietnamese by default, with English
+in Settings > Chung > Ngôn ngữ: write every UI string as `L("câu tiếng Việt")`
+(`{}` for values) and add its English to `Strings.en` in
+`Sources/TwodayNoteKit/Language.swift`; `tools/test.sh` fails on a missing one.
+Snapshots in English: `APP_LANG=en tools/snap.sh`.
 
 ## Toolchain: Command Line Tools only (no Xcode)
 
@@ -40,7 +44,7 @@ Design plan: `docs/DESIGN.md`. UI text is Vietnamese.
 
 ## Design rules
 
-- Use Apple's controls and system styles. Only the accent color is custom: `UI/Theme.swift` (`ThemeStore.defaultID`). People change it, and light or dark mode, in Settings > Appearance.
+- Use Apple's controls and system styles. Only the accent color is custom: `UI/Theme.swift` (`ThemeStore.defaultID`). People change it, and light, dark, or system mode (`Prefs.appearance`), in Settings > Giao diện.
 - Views use `.tint`, `Palette.accent`, `Palette.accentText` (accent-colored text), and `Palette.onAccent` (text on an accent fill). Never hard-code colors, radii, or durations in views.
 - Compare accents: add `APP_ACCENT=<id>` to the snapshot command.
 - Spacing comes from `Space` in `UI/Grid.swift`, on a 4 pt grid. Mark custom pages and cards with `.gridArea` and `.gridProbe`.

@@ -34,8 +34,8 @@ struct VideoThumbnail: View {
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .help("Mở video trên YouTube")
-        .accessibilityLabel("Ảnh video, bấm để mở trên YouTube")
+        .help(L("Mở video trên YouTube"))
+        .accessibilityLabel(L("Ảnh video, bấm để mở trên YouTube"))
     }
 }
 
@@ -60,7 +60,7 @@ struct LinkInfo: View {
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .help("Mở \(link.shortURL)")
+                .help(L("Mở {}", link.shortURL))
                 if link.repoPath != nil {
                     Text("Repo")
                         .font(.caption2)
@@ -102,7 +102,7 @@ struct LinkInfo: View {
     private var title: String {
         if link.key == nil { return link.shortURL }
         if let title = link.title { return title }
-        return link.checked ? link.shortURL : "Đang tải…"
+        return link.checked ? link.shortURL : L("Đang tải…")
     }
 
     /// "github/spec-kit  ★ 147k  Python" or the video's channel.

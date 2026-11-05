@@ -1,4 +1,5 @@
 import AppKit
+import TwodayNoteKit
 import Observation
 import SwiftUI
 
@@ -80,7 +81,7 @@ final class ZoomScrollView: NSScrollView {
         imageView.image = image
         imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.isEditable = false
-        imageView.setAccessibilityLabel("Ảnh")
+        imageView.setAccessibilityLabel(L("Ảnh"))
         documentView = imageView
 
         clip.postsBoundsChangedNotifications = true

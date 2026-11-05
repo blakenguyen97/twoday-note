@@ -15,6 +15,8 @@ enum SelfTest {
     static func runIfRequested(model: AppModel) {
         guard requested else { return }
         setvbuf(stdout, nil, _IOLBF, 0)
+        // The checks read the Vietnamese text, whatever Settings says.
+        Lang.override = .vi
         guard Store.isOverridden else {
             print("SELFTEST refused: set APP_STORE to a file in /tmp")
             finish(code: 1)
@@ -251,6 +253,24 @@ enum SelfTest {
             model.delete(zoomed.id)
             model.undo = nil
             app.closePopover()
+
+            // Settings > Giao diện > Chế độ, and Ngôn ngữ.
+            let defaults = UserDefaults.standard
+            let savedMode = defaults.string(forKey: Prefs.appearanceKey)
+            defaults.set(AppearanceMode.dark.rawValue, forKey: Prefs.appearanceKey)
+            try? await Task.sleep(for: .seconds(0.2))
+            check("Chế độ Tối makes the app dark", NSApp.appearance?.name == .darkAqua && app.popover.appearance?.name == .darkAqua)
+            defaults.set(AppearanceMode.light.rawValue, forKey: Prefs.appearanceKey)
+            try? await Task.sleep(for: .seconds(0.2))
+            check("Chế độ Sáng makes it light", NSApp.appearance?.name == .aqua)
+            defaults.set(savedMode, forKey: Prefs.appearanceKey)
+            try? await Task.sleep(for: .seconds(0.2))
+            check("Theo hệ thống follows the Mac again", savedMode != nil || NSApp.appearance == nil)
+            Lang.override = .en
+            check("English names the tabs in English", model.label(offset: AppModel.laterTab) == "Later"
+                  && Progress.summary(remaining: 2, done: 1) == "2 to do · 1 done")
+            Lang.override = .vi
+            check("Tiếng Việt names them in Vietnamese", model.label(offset: AppModel.laterTab) == "Xem sau")
 
             // Focus.
             model.focus.start(minutes: 25)
