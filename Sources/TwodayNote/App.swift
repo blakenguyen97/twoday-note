@@ -29,14 +29,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     let popover = NSPopover()
     private var hotKey: HotKey?
     private var settingsWindow: NSWindow?
+    /// The number drawn in the menu bar icon, so it redraws only on change.
+    private var shownCount = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         NSApp.mainMenu = MainMenu.make()
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = StatusIcon.make()
-        item.button?.imagePosition = .imageLeading
+        item.button?.image = StatusIcon.make(count: 0)
+        item.button?.imagePosition = .imageOnly
         item.button?.target = self
         item.button?.action = #selector(togglePopover(_:))
         item.button?.toolTip = "TwodayNote (⌃⌥N)"
@@ -124,7 +126,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     private func updateStatusTitle() {
         let remaining = model.todayCounts.remaining
-        statusItem?.button?.title = Prefs.showCount && remaining > 0 ? " \(remaining)" : ""
+        // The count sits inside the icon's front card; none when all is done.
+        let shown = Prefs.showCount ? remaining : 0
+        if shown != shownCount {
+            shownCount = shown
+            statusItem?.button?.image = StatusIcon.make(count: shown)
+        }
         statusItem?.button?.setAccessibilityValue(Progress.summary(remaining: remaining, done: model.todayCounts.done))
     }
 

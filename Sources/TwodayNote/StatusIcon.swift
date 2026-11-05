@@ -1,10 +1,13 @@
 import AppKit
 
-/// The menu bar icon: the app icon's two stacked cards with a "2" cut out
-/// of the front one. A template image, so macOS tints it for light and dark
-/// menu bars like the system's own icons.
+/// The menu bar icon: the app icon's two stacked cards, with today's count
+/// of unfinished tasks cut out of the front one. No number when everything
+/// is done. A template image, so macOS tints it for light and dark menu bars
+/// like the system's own icons.
 enum StatusIcon {
-    static func make() -> NSImage {
+    static func make(count: Int) -> NSImage {
+        // Two digits at most: "99" stands for 99 or more.
+        let label = count > 0 ? String(min(count, 99)) : nil
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in // grid: ok menu bar icon size, not layout
             guard let context = NSGraphicsContext.current?.cgContext else { return false }
 
@@ -22,22 +25,24 @@ enum StatusIcon {
             NSColor.black.setFill()
             front.fill()
 
-            // The "2", cut out of the front card.
-            context.saveGState()
-            context.setBlendMode(.destinationOut)
-            context.translateBy(x: frontRect.midX, y: frontRect.midY)
-            context.rotate(by: -3 * .pi / 180)
-            let two = NSAttributedString(string: "2", attributes: [
-                .font: NSFont.systemFont(ofSize: 10, weight: .heavy),
-                .foregroundColor: NSColor.black,
-            ])
-            let size = two.size()
-            two.draw(at: NSPoint(x: -size.width / 2, y: -size.height / 2 + 0.5))
-            context.restoreGState()
+            // The count, cut out of the front card. Two digits get a smaller, condensed font.
+            if let label {
+                context.saveGState()
+                context.setBlendMode(.destinationOut)
+                context.translateBy(x: frontRect.midX, y: frontRect.midY)
+                context.rotate(by: -3 * .pi / 180)
+                let font = label.count == 1
+                    ? NSFont.systemFont(ofSize: 10, weight: .heavy)
+                    : NSFont.systemFont(ofSize: 8, weight: .heavy, width: .condensed)
+                let text = NSAttributedString(string: label, attributes: [.font: font, .foregroundColor: NSColor.black])
+                let size = text.size()
+                text.draw(at: NSPoint(x: -size.width / 2, y: -size.height / 2 + 0.5))
+                context.restoreGState()
+            }
             return true
         }
         image.isTemplate = true
-        image.accessibilityDescription = "TwodayNote"
+        image.accessibilityDescription = label.map { "TwodayNote, còn \($0) việc" } ?? "TwodayNote"
         return image
     }
 
