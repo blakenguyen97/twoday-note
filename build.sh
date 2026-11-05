@@ -38,17 +38,12 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin" "$app/Contents/MacOS/$name"
 sed -e "s/__BUILD__/$(date +%Y%m%d%H%M)/" "$here/Info.plist.in" > "$app/Contents/Info.plist"
-# The icon: Icon/AppIcon.icon -> Resources/Assets.car + AppIcon.icns, rebuilt when it changed.
-if [[ -d "$here/Icon/AppIcon.icon" ]]; then
-  icns="$here/Resources/AppIcon.icns"
-  if [[ ! -f "$icns" || -n "$(find "$here/Icon/AppIcon.icon" -newer "$icns" | head -1)" ]]; then
-    "$here/tools/make_icon.sh"
-  fi
-  # Assets.car exists only when actool (Xcode) built the icon.
-  for f in Assets.car AppIcon.icns; do
-    if [[ -f "$here/Resources/$f" ]]; then cp -X "$here/Resources/$f" "$app/Contents/Resources/"; fi
-  done
+# The icon: Icon/AppIcon.iconset -> Resources/AppIcon.icns, rebuilt when a PNG changed.
+icns="$here/Resources/AppIcon.icns"
+if [[ ! -f "$icns" || -n "$(find "$here/Icon/AppIcon.iconset" -newer "$icns" | head -1)" ]]; then
+  "$here/tools/make_icon.sh"
 fi
+cp -X "$icns" "$app/Contents/Resources/"
 xattr -cr "$app"
 codesign --force --sign "$identity" "$app" 2>&1 | grep -v "replacing existing signature" || true
 echo "installed $app (signed: ${identity})"

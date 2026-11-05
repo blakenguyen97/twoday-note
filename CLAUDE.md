@@ -12,7 +12,6 @@ Design plan: `docs/DESIGN.md`. UI text is Vietnamese.
 - No `@State` syntax: in this SDK it is a macro that needs Xcode. Write
   `private let text = State(initialValue: "")` and use `.wrappedValue` / `.projectedValue`.
   `@Observable`, `@Environment`, `@FocusState`, `@AppStorage`, `@Bindable` work.
-- No `actool`: `tools/make_icon.sh` falls back to `tools/icon_fallback.swift` (flat `.icns` via `iconutil`).
 - Unit tests: `tools/test.sh` (passes the swift-testing plugin path).
 - With Xcode installed, all of the above works the template's normal way.
 
@@ -22,7 +21,7 @@ Design plan: `docs/DESIGN.md`. UI text is Vietnamese.
 - `Sources/TwodayNoteKit/` rules and data logic with no SwiftUI. Tests in `Tests/TwodayNoteKitTests/`.
 - `Package.swift` a Swift package. There is no Xcode project.
 - `build.sh` builds, signs, and installs `~/Applications/TwodayNote.app`.
-- `Icon/AppIcon.icon` the app icon, an Icon Composer file (JSON plus SVG layers). `build.sh` compiles it with `tools/make_icon.sh`; `tools/icon_review.sh` renders every look into one PNG.
+- `Icon/AppIcon.iconset` the app icon: macOS PNGs from 16 to 1024 px (`icon_16x16.png` … `icon_512x512@2x.png`). `build.sh` turns it into `Resources/AppIcon.icns` with `tools/make_icon.sh` (`iconutil`, no Xcode needed). To change the icon, replace the PNGs with the same names.
 - `docs/` the brief, the screen index, and the user stories, when they exist.
 
 ## Build and check
