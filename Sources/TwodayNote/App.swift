@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSApp.mainMenu = MainMenu.make()
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "checklist", accessibilityDescription: "TwodayNote")
+        item.button?.image = StatusIcon.make()
         item.button?.imagePosition = .imageLeading
         item.button?.target = self
         item.button?.action = #selector(togglePopover(_:))
