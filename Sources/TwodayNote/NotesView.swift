@@ -126,9 +126,13 @@ private struct MoreMenu: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.title3)
+                // As bright as the title, not the faded borderless gray.
+                .foregroundStyle(.primary)
+                .contentShape(.rect)
         }
         .menuStyle(.button)
-        .buttonStyle(.borderless)
+        // Plain draws the label as is; borderless repaints it gray.
+        .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
         .help("Thêm tuỳ chọn")
