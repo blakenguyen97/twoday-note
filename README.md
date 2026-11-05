@@ -10,13 +10,14 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/popover.png" alt="The TwodayNote popover: today's tasks, an idea, a note, and a focus session counting down" width="386">
+  <img src="docs/images/popover.png" alt="The TwodayNote popover: today's tasks with an overdue one marked in orange, an idea, and a focus session counting down" width="386">
 </p>
 
 ## Features
 
 - **Lives in the menu bar.** No Dock icon, no window to manage. Click the icon or press **⌃⌥N** from any app.
 - **Today and tomorrow.** Two tabs, switch with **⌘1 ⌘2**.
+- **Overdue at a glance.** Unfinished tasks from earlier days move to the top of today with an orange mark: "từ T4" (since Wednesday) or "trễ 3 ngày" (3 days late).
 - **Xem sau (look at later).** A third tab, **⌘3**, for things you came across and want to see later: links, snippets, screenshots. No day, no deadline, never carried over to today.
 - **Four kinds of blocks.** Type a prefix at the start of a line:
 

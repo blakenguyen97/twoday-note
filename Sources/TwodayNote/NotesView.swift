@@ -267,10 +267,12 @@ private struct EntryRow: View {
             leading
             content
             if let from = entry.carriedFrom, !entry.isDone {
-                Text("từ \(Day.shortWeekday(from))")
+                // Overdue: carried over from an earlier day, still not done.
+                Label(Day.lateLabel(from: from, today: model.today), systemImage: "exclamationmark.circle")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .help("Chưa xong từ \(Day.long(from)), tự chuyển sang hôm nay")
+                    .foregroundStyle(.orange)
+                    .fixedSize()
+                    .help("Quá hạn: chưa xong từ \(Day.long(from)), tự chuyển sang hôm nay")
             }
             if entry.isLater {
                 Text(Day.short(entry.createdAt))

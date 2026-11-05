@@ -41,6 +41,11 @@ func labels() {
     #expect(Day.long(thursday, calendar: calendar) == "Thứ Năm, 5 tháng 11")
     #expect(Day.shortWeekday(thursday, calendar: calendar) == "T5")
     #expect(Day.short(thursday, calendar: calendar) == "5/11")
+    let wednesday = Day.adding(-1, to: thursday, calendar: calendar)
+    let monday = Day.adding(-3, to: thursday, calendar: calendar)
+    #expect(Day.daysLate(from: monday, today: thursday, calendar: calendar) == 3)
+    #expect(Day.lateLabel(from: wednesday, today: thursday, calendar: calendar) == "từ T4")
+    #expect(Day.lateLabel(from: monday, today: thursday, calendar: calendar) == "trễ 3 ngày")
 }
 
 @Test("Only unfinished tasks from earlier days carry over")

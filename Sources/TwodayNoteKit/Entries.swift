@@ -117,6 +117,17 @@ public enum Day {
         return "\(weekday(date, calendar: calendar)), \(parts.day ?? 1) tháng \(parts.month ?? 1)"
     }
 
+    /// Whole days from `day` to `today`: 1 for yesterday.
+    public static func daysLate(from day: Date, today: Date, calendar: Calendar = .current) -> Int {
+        calendar.dateComponents([.day], from: start(of: day, calendar: calendar), to: start(of: today, calendar: calendar)).day ?? 0
+    }
+
+    /// Beside a carried task: "từ T4" a day late, "trễ 3 ngày" when longer.
+    public static func lateLabel(from day: Date, today: Date, calendar: Calendar = .current) -> String {
+        let late = daysLate(from: day, today: today, calendar: calendar)
+        return late > 1 ? "trễ \(late) ngày" : "từ \(shortWeekday(day, calendar: calendar))"
+    }
+
     /// "5/11": the day a Xem sau block was saved.
     public static func short(_ date: Date, calendar: Calendar = .current) -> String {
         let parts = calendar.dateComponents([.day, .month], from: date)

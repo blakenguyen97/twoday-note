@@ -25,7 +25,8 @@ Mỗi khối có thể kèm ảnh dán bằng ⌘V, hiện thành hàng thumbnai
 Khối chỉ có ảnh, không chữ, vẫn được giữ.
 
 Task chưa xong của những ngày trước tự chuyển sang hôm nay (bật/tắt trong
-Cài đặt) và ghi "từ T4" để biết nó bị dời.
+Cài đặt) và có dấu quá hạn màu cam bên phải: biểu tượng chấm than và "từ T4",
+hoặc "trễ 3 ngày" khi đã dời hơn một ngày. Đánh dấu xong thì dấu đó mất.
 
 ## Xem sau
 
