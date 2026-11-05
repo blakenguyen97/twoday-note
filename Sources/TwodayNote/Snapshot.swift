@@ -18,6 +18,8 @@ enum Snapshot {
             return
         }
         let only = env["APP_SNAPSHOT_PAGES"].map { Set($0.split(separator: ",").map(String.init)) }
+        // No open/close animation, or a capture can catch the popover mid-fade.
+        app.popover.animates = false
         Task {
             var activity: IOPMAssertionID = 0
             IOPMAssertionDeclareUserActivity("Snapshots" as CFString, kIOPMUserActiveLocal, &activity)

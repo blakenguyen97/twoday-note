@@ -38,17 +38,18 @@ private struct DayHeader: View {
         @Bindable var model = model
         let counts = model.book.counts(on: model.selectedDay)
         VStack(alignment: .leading, spacing: Space.md) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(Day.long(model.selectedDay))
-                        .font(.title3.weight(.semibold))
-                    Text(Progress.summary(remaining: counts.remaining, done: counts.done))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .contentTransition(.numericText())
-                }
+            HStack(alignment: .center) {
+                Wordmark()
                 Spacer()
                 MoreMenu(hasDone: counts.done > 0)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Day.long(model.selectedDay))
+                    .font(.title3.weight(.semibold))
+                Text(Progress.summary(remaining: counts.remaining, done: counts.done))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
             }
             Picker("Ngày", selection: $model.dayOffset) {
                 ForEach(0..<AppModel.dayCount, id: \.self) { offset in
@@ -58,6 +59,35 @@ private struct DayHeader: View {
             .pickerStyle(.segmented)
             .labelsHidden()
         }
+    }
+}
+
+/// The TwodayNote wordmark from Brand/, light or dark to match the popover.
+/// Text stands in when the SVGs are missing (a bare `swift run`).
+private struct Wordmark: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        if let image = Brand.wordmark(dark: scheme == .dark) {
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(height: Space.xxl)
+                .accessibilityLabel("TwodayNote")
+        } else {
+            Text("TwodayNote").font(.headline)
+        }
+    }
+}
+
+enum Brand {
+    private static let light = load("TwodayNote-wordmark-light")
+    private static let dark = load("TwodayNote-wordmark-dark")
+
+    static func wordmark(dark isDark: Bool) -> NSImage? { isDark ? dark : light }
+
+    private static func load(_ name: String) -> NSImage? {
+        Bundle.main.url(forResource: name, withExtension: "svg").flatMap(NSImage.init(contentsOf:))
     }
 }
 
