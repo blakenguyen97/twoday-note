@@ -33,9 +33,7 @@ struct ZoomableImage: NSViewRepresentable {
 
     func makeNSView(context: Context) -> ZoomScrollView {
         let view = ZoomScrollView(image: image)
-        view.onChange = { [weak control] magnification, fitted, canZoomIn in
-            control?.update(magnification: magnification, fitted: fitted, canZoomIn: canZoomIn)
-        }
+        view.control = control
         control.view = view
         return view
     }
@@ -60,7 +58,9 @@ final class ZoomScrollView: NSScrollView {
     /// How far past the image's own size people can zoom.
     private static let maxMagnification: CGFloat = 8
 
-    var onChange: ((CGFloat, Bool, Bool) -> Void)?
+    /// Gets the zoom level, while this is the image on screen.
+    weak var control: ZoomControl?
+    private var reportPending = false
     /// Follows the view's size while true; a zoom or pinch ends it.
     private var fitted = true
     private var fitMagnification: CGFloat = 1
@@ -91,18 +91,25 @@ final class ZoomScrollView: NSScrollView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
-    override func layout() {
-        super.layout()
+    // Fits on a new size here, not in layout(): changing the magnification
+    // while the window lays out asks for another pass, again and again.
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
         updateFitMagnification()
         if fitted, abs(magnification - fitMagnification) > 0.001 { magnification = fitMagnification }
         report()
     }
 
-    /// The magnification that shows the whole image, never above its own size.
+    /// The magnification that shows the whole image, never above its own
+    /// size. Measured without scroll bars: a fitted image needs none, and
+    /// counting them would make the fit, and the scroll bars, flip back and forth.
     private func updateFitMagnification() {
+        let space = NSScrollView.contentSize(forFrameSize: frame.size, horizontalScrollerClass: nil,
+                                             verticalScrollerClass: nil, borderType: borderType,
+                                             controlSize: .regular, scrollerStyle: scrollerStyle)
         guard let size = documentView?.frame.size, size.width > 0, size.height > 0,
-              contentView.frame.width > 0, contentView.frame.height > 0 else { return }
-        fitMagnification = min(1, contentView.frame.width / size.width, contentView.frame.height / size.height)
+              space.width > 0, space.height > 0 else { return }
+        fitMagnification = min(1, space.width / size.width, space.height / size.height)
         minMagnification = fitMagnification
         maxMagnification = max(Self.maxMagnification, fitMagnification)
     }
@@ -196,8 +203,20 @@ final class ZoomScrollView: NSScrollView {
         window?.invalidateCursorRects(for: documentView ?? self)
     }
 
+    /// Tells the ZoomControl after the current pass, once, and only while
+    /// this is the image on screen: while ‹ › swaps images, the old one must
+    /// not overwrite the new one's level. Changing SwiftUI state during
+    /// layout would start another layout pass.
     private func report() {
-        onChange?(magnification, fitted, magnification < maxMagnification - 0.001)
+        guard !reportPending else { return }
+        reportPending = true
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            reportPending = false
+            guard let control, control.view === self else { return }
+            control.update(magnification: magnification, fitted: fitted,
+                           canZoomIn: magnification < maxMagnification - 0.001)
+        }
     }
 }
 

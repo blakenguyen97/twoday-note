@@ -154,6 +154,44 @@ enum SelfTest {
             check("the image opens fitted again after closing zoomed", reopened !== zoomView && reopened?.isFitted == true,
                   "same view: \(reopened === zoomView), magnification \(reopened?.magnification ?? 0)")
             model.viewer = nil
+            try? await Task.sleep(for: .seconds(0.5))
+
+            // Paging through wide screenshots with ‹ ›, fitted and zoomed in.
+            board.clearContents()
+            board.setData(SampleImage.png(hue: 0.08, size: NSSize(width: 2880, height: 1200)), forType: .png)
+            _ = model.pasteImages(from: board, into: zoomed.id)
+            board.clearContents()
+            board.setData(SampleImage.png(hue: 0.75, size: NSSize(width: 1200, height: 2400)), forType: .png)
+            _ = model.pasteImages(from: board, into: zoomed.id)
+            let pages = model.book.entries.first { $0.id == zoomed.id }!.images
+            model.viewer = ImageViewer(entryID: zoomed.id, name: pages[2])
+            try? await Task.sleep(for: .seconds(0.5))
+            @MainActor func arrow(_ key: Int) {
+                let character = String(Character(UnicodeScalar(key)!))
+                if let window = app.popoverWindow,
+                   let down = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [.numericPad, .function],
+                                               timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                                               context: nil, characters: character, charactersIgnoringModifiers: character,
+                                               isARepeat: false, keyCode: key == NSLeftArrowFunctionKey ? 123 : 124) {
+                    window.makeKey()
+                    // False at the first or last image, where the button is disabled.
+                    _ = window.performKeyEquivalent(with: down)
+                }
+            }
+            for round in 0..<3 {
+                arrow(NSLeftArrowFunctionKey)
+                try? await Task.sleep(for: .seconds(0.4))
+                if round == 1 { ZoomScrollView.find(in: app.popoverWindow?.contentView)?.zoom(by: 4) }
+                try? await Task.sleep(for: .seconds(0.4))
+                arrow(NSLeftArrowFunctionKey)
+                try? await Task.sleep(for: .seconds(0.4))
+                arrow(NSRightArrowFunctionKey)
+                try? await Task.sleep(for: .seconds(0.4))
+            }
+            check("← → page through wide images", model.viewer?.name == pages[1]
+                  && ZoomScrollView.find(in: app.popoverWindow?.contentView)?.isFitted == true,
+                  "showing \(model.viewer.map { pages.firstIndex(of: $0.name) ?? -1 } ?? -1)")
+            model.viewer = nil
             app.popover.behavior = .transient
             model.delete(zoomed.id)
             model.undo = nil

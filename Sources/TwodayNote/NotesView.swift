@@ -440,22 +440,22 @@ private struct ImageViewerView: View {
                     .keyboardShortcut(.cancelAction)
                 Spacer(minLength: Space.sm)
                 if names.count > 1 {
-                    iconButton("Ảnh trước", "chevron.left") { show(names, index - 1) }
+                    iconButton("Ảnh trước", "chevron.left") { step(-1) }
                         .keyboardShortcut(.leftArrow, modifiers: [])
                         .disabled(index == 0)
                     Text("\(index + 1) / \(names.count)")
                         .font(.callout.monospacedDigit())
                         .foregroundStyle(.secondary)
-                    iconButton("Ảnh sau", "chevron.right") { show(names, index + 1) }
+                    iconButton("Ảnh sau", "chevron.right") { step(1) }
                         .keyboardShortcut(.rightArrow, modifiers: [])
                         .disabled(index == names.count - 1)
                 }
                 Spacer(minLength: Space.sm)
                 iconButton("Mở bằng Xem trước", "arrow.up.forward.app") {
-                    NSWorkspace.shared.open(ImageStore.url(viewer.name))
+                    if let name = model.viewer?.name { NSWorkspace.shared.open(ImageStore.url(name)) }
                 }
-                iconButton("Sao chép ảnh", "doc.on.doc") { ImageStore.copy(viewer.name) }
-                iconButton("Xoá ảnh", "trash") { remove(names, index) }
+                iconButton("Sao chép ảnh", "doc.on.doc") { if let name = model.viewer?.name { ImageStore.copy(name) } }
+                iconButton("Xoá ảnh", "trash") { removeShown() }
             }
             .frame(height: Space.section)
             .padding([.horizontal, .top], Space.lg)
@@ -476,13 +476,20 @@ private struct ImageViewerView: View {
         .onDisappear { model.focusTick += 1 }
     }
 
-    private func show(_ names: [String], _ index: Int) {
-        guard names.indices.contains(index) else { return }
-        model.viewer?.name = names[index]
+    // The actions read the model when they run: a keyboard shortcut can
+    // keep the action from an earlier render, with an old index.
+
+    private func step(_ delta: Int) {
+        let names = model.viewerImages
+        guard let name = model.viewer?.name, let index = names.firstIndex(of: name),
+              names.indices.contains(index + delta) else { return }
+        model.viewer?.name = names[index + delta]
     }
 
     /// Deletes the shown image and moves to the next one, if any.
-    private func remove(_ names: [String], _ index: Int) {
+    private func removeShown() {
+        let names = model.viewerImages
+        guard let viewer = model.viewer, let index = names.firstIndex(of: viewer.name) else { return }
         let name = names[index]
         let rest = names.filter { $0 != name }
         let next = rest.isEmpty ? nil : rest[min(index, rest.count - 1)]

@@ -36,11 +36,14 @@ enum SeedData {
 
 /// A bar chart drawn in code: the pasted image in seed data and the self-test.
 enum SampleImage {
-    static func png(hue: CGFloat = 0.58) -> Data {
-        let size = NSSize(width: 640, height: 400)
+    static func png(hue: CGFloat = 0.58, size: NSSize = NSSize(width: 640, height: 400)) -> Data {
         let image = NSImage(size: size, flipped: false) { rect in
             NSColor(white: 0.97, alpha: 1).setFill()
             rect.fill()
+            // Drawn at 640 × 400, stretched to `size`.
+            let scale = NSAffineTransform()
+            scale.scaleX(by: rect.width / 640, yBy: rect.height / 400)
+            scale.concat()
             for (i, value) in [0.35, 0.55, 0.45, 0.7, 0.62, 0.85].enumerated() {
                 NSColor(hue: hue, saturation: 0.55, brightness: 0.9 - CGFloat(i) * 0.04, alpha: 1).setFill()
                 NSBezierPath(roundedRect: NSRect(x: 60 + CGFloat(i) * 92, y: 40, width: 60, height: 320 * value),
