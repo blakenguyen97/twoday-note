@@ -34,12 +34,30 @@
 
 The interface is in Vietnamese.
 
-## Requirements
+## Download
 
-- macOS 26 or later
-- Swift 6.2 or later. The Command Line Tools are enough; Xcode is not needed.
+TwodayNote needs **macOS 26 or later** and runs on both Apple silicon and Intel Macs.
 
-## Install
+1. Download `TwodayNote-<version>.dmg` from the [latest release](https://github.com/blakenguyen97/twoday-note/releases/latest).
+2. Open the DMG and drag **TwodayNote** into **Applications**.
+3. Open TwodayNote from Applications. It has no Dock icon: look for the card icon in the menu bar.
+
+### "TwodayNote can't be opened" on first launch
+
+The app is not notarized by Apple yet, so macOS blocks the first launch. To allow it once:
+
+1. Open **System Settings › Privacy & Security**.
+2. Scroll down to the message about TwodayNote and click **Open Anyway**, then confirm.
+
+Or run this once in Terminal:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/TwodayNote.app
+```
+
+## Build from source
+
+Requires Swift 6.2 or later. The Command Line Tools are enough; Xcode is not needed.
 
 ```sh
 git clone https://github.com/blakenguyen97/twoday-note.git TwodayNote
@@ -70,6 +88,7 @@ There is no account, sync, or network access.
 | Self-test on the real app (temporary data) | `tools/selftest.sh` |
 | Screenshots in light and dark mode | `tools/snap.sh` → `/tmp/TwodayNote-shots/` |
 | Spacing check | `tools/grid-lint.sh` |
+| Release DMG (universal, ad hoc signed) | `tools/release.sh` → `dist/TwodayNote-<version>.dmg` |
 
 `tools/snap.sh` opens the popover and takes keyboard focus for a few seconds while it runs.
 

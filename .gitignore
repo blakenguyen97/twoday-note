@@ -13,3 +13,6 @@ skills-lock.json
 
 # Built by build.sh from Icon/AppIcon.iconset
 /Resources/
+
+# Release disk images (tools/release.sh)
+/dist/
