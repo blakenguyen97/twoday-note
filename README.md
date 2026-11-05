@@ -73,15 +73,4 @@ There is no account, sync, or network access.
 
 `tools/snap.sh` opens the popover and takes keyboard focus for a few seconds while it runs.
 
-### Project layout
-
-```
-Sources/TwodayNote/       the app: menu bar item, popover, Focus timer, Settings
-Sources/TwodayNoteKit/    data and rules with no UI: blocks, days, carry-over, the focus clock
-Tests/                    unit tests for TwodayNoteKit
-Icon/AppIcon.iconset/     app icon PNGs, built into AppIcon.icns with iconutil
-Brand/                    wordmark and lockup logos, light and dark
-docs/DESIGN.md            design plan: structure, commands, empty states
-```
-
 The app is a Swift package with no Xcode project. [CLAUDE.md](CLAUDE.md) has the build rules and notes on building with only the Command Line Tools.
