@@ -6,3 +6,6 @@ xcuserdata/
 .DS_Store
 .env*
 /shots/
+
+# Agent skills used to build the app (local only)
+.agents/
