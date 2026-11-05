@@ -27,6 +27,7 @@ Snapshots in English: `APP_LANG=en tools/snap.sh`.
 - `build.sh` builds, signs, and installs `~/Applications/TwodayNote.app`.
 - `Brand/` logos: wordmark and lockup, light and dark, SVG and PNG. `build.sh` copies the two lockup SVGs (logo and name) into the app; the popover header shows them (`Lockup` in `NotesView.swift`).
 - `Icon/AppIcon.iconset` the app icon: macOS PNGs from 16 to 1024 px (`icon_16x16.png` … `icon_512x512@2x.png`). `build.sh` turns it into `Resources/AppIcon.icns` with `tools/make_icon.sh` (`iconutil`, no Xcode needed). To change the icon, replace the PNGs with the same names.
+- `Updater.swift` checks GitHub releases daily and installs one in place. A release needs the tag `v<CFBundleShortVersionString>` and the DMG from `tools/release.sh` attached; the updater refuses a DMG whose app has another version or bundle id.
 - `docs/` the brief, the screen index, and the user stories, when they exist.
 
 ## Build and check

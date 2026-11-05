@@ -32,6 +32,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     let popover = NSPopover()
     private var hotKey: HotKey?
     private var settingsWindow: NSWindow?
+    /// Hourly: lets the updater check GitHub once a day has passed.
+    private var updateTimer: Timer?
     /// The number drawn in the menu bar icon, so it redraws only on change.
     private var shownCount = 0
     /// The language and mode last applied, so a Settings change is seen once.
@@ -78,6 +80,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             // After the menu bar has placed the icon, so the popover points at it.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { self.showGuide(nil) }
         }
+
+        // Updates: a few seconds after launch, then every hour and after sleep,
+        // each time checking only when a day has passed (Updater.swift).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { Updater.shared.checkIfDue() }
+        let timer = Timer(timeInterval: 60 * 60, repeats: true) { @Sendable _ in
+            MainActor.assumeIsolated { Updater.shared.checkIfDue() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        updateTimer = timer
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(didWake),
+                                                          name: NSWorkspace.didWakeNotification, object: nil)
 
         SeedData.insertIfRequested(into: model)
         SelfTest.runIfRequested(model: model)
@@ -213,6 +226,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             .foregroundColor: model.focus.isPaused ? NSColor.secondaryLabelColor : NSColor.labelColor,
         ])
         button.imagePosition = .imageLeading
+    }
+
+    @objc private func didWake() {
+        Updater.shared.checkIfDue()
     }
 
     @objc private func dayChanged() {

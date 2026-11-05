@@ -293,6 +293,22 @@ enum SelfTest {
             Lang.override = .vi
             check("Tiếng Việt names them in Vietnamese", model.label(offset: AppModel.laterTab) == "Xem sau")
 
+            // Updates: the rules, without the network.
+            let updater = Updater.shared
+            check("Settings shows the app's version", !Updater.versionText.isEmpty
+                  && Updater.versionText.hasPrefix(Updater.version) && AppVersion(Updater.version) != nil, Updater.versionText)
+            updater.checkIfDue()
+            check("the daily check stays off the network in tests", updater.phase == .idle)
+            updater.consider(Snapshot.sampleRelease)
+            check("a newer release on GitHub is offered", updater.isAvailable
+                  && (updater.release?.version).map { $0 > AppVersion(Updater.version)! } == true)
+            let page = URL(string: "https://github.com/\(Updater.repo)")!
+            updater.consider(Release(tag: "v\(Updater.version)", page: page,
+                                     assets: [.init(name: "TwodayNote.dmg", url: page, size: 1)]))
+            check("the same version is up to date", updater.phase == .upToDate)
+            updater.reset()
+            await checkInstall()
+
             // Focus.
             model.focus.start(minutes: 25)
             check("Bắt đầu shows the countdown in the menu bar", app.statusTitle.contains("25:00"), app.statusTitle)
@@ -309,6 +325,55 @@ enum SelfTest {
             print(failures == 0 ? "SELFTEST PASS \(count) checks" : "SELFTEST FAIL \(failures) of \(count) checks")
             finish(code: failures == 0 ? 0 : 1)
         }
+    }
+
+    /// The whole install on copies in /tmp: a disk image with TwodayNote 9.9
+    /// replaces a copy of this app; one that claims another version does not.
+    private static func checkInstall() async {
+        let root = URL(fileURLWithPath: "/tmp/TwodayNote-update-test", isDirectory: true)
+        let files = FileManager.default
+        try? files.removeItem(at: root)
+        defer { try? files.removeItem(at: root) }
+        let name = Bundle.main.bundleURL.lastPathComponent
+        let installed = root.appending(path: "Applications").appending(path: name)
+        let stage = root.appending(path: "stage", directoryHint: .isDirectory)
+        let image = root.appending(path: "TwodayNote-9.9.dmg")
+        do {
+            try files.createDirectory(at: installed.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Installer.run("/usr/bin/ditto", [Bundle.main.bundleURL.path, installed.path])
+            let next = stage.appending(path: name)
+            try Installer.run("/usr/bin/ditto", [Bundle.main.bundleURL.path, next.path])
+            let plist = next.appending(path: "Contents/Info.plist").path
+            try Installer.run("/usr/bin/plutil", ["-replace", "CFBundleShortVersionString", "-string", "9.9", plist])
+            try Installer.run("/usr/bin/codesign", ["--force", "--sign", "-", next.path])
+            try Installer.run("/usr/bin/hdiutil", ["create", "-quiet", "-volname", "TwodayNote", "-srcfolder", stage.path,
+                                                   "-fs", "HFS+", "-format", "UDZO", image.path])
+        } catch {
+            check("an update installs in place", false, "setup: \(error.localizedDescription)")
+            return
+        }
+        func version() -> String? {
+            NSDictionary(contentsOf: installed.appending(path: "Contents/Info.plist"))?["CFBundleShortVersionString"] as? String
+        }
+        let before = version()
+        var refused = false
+        do {
+            try await Installer.install(from: image, version: AppVersion("9.8")!, over: installed)
+        } catch UpdateError.wrongVersion {
+            refused = true
+        } catch {}
+        check("a disk image with another version is refused", refused && version() == before)
+        do {
+            try await Installer.install(from: image, version: AppVersion("9.9")!, over: installed)
+            // codesign, not Security: it already read this path's old signature in this process.
+            let signed = (try? Installer.run("/usr/bin/codesign", ["--verify", "--strict", "--deep", installed.path])) != nil
+            check("an update installs in place, still signed", version() == "9.9" && signed, version() ?? "none")
+        } catch {
+            check("an update installs in place", false, error.localizedDescription)
+        }
+        let mounts = (try? files.contentsOfDirectory(atPath: "/Volumes")) ?? []
+        let leftover = (try? Installer.run("/usr/bin/hdiutil", ["info"]))?.contains(root.path) ?? false
+        check("the disk image is ejected after installing", !leftover, mounts.joined(separator: ", "))
     }
 
     private static func check(_ name: String, _ ok: Bool, _ detail: String = "") {

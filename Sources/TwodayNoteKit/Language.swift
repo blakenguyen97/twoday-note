@@ -206,6 +206,40 @@ public enum Strings {
         "Màn hình chính mới": "New home screen",
         "Ngôn ngữ lập trình Swift": "The Swift Programming Language",
 
+        // Updates
+        "Cập nhật": "Updates",
+        "Phiên bản": "Version",
+        "Tự kiểm tra bản mới mỗi ngày": "Check for updates every day",
+        "Có bản mới trên GitHub thì cập nhật bằng một nút, không phải tải và cài lại.":
+            "When GitHub has a newer version, update with one click, no download or reinstall.",
+        "Chưa kiểm tra": "Not checked yet",
+        "Đây là bản mới nhất": "You’re up to date",
+        "Đang kiểm tra…": "Checking…",
+        "Có bản {}": "Version {} is available",
+        "Đang cài bản {}…": "Installing version {}…",
+        "TwodayNote sẽ tự mở lại khi xong.": "TwodayNote opens again when it’s done.",
+        "Kiểm tra lần cuối {}": "Last checked {}",
+        "Có gì mới": "What’s New",
+        "Cập nhật và mở lại": "Update and Relaunch",
+        "Kiểm tra ngay": "Check Now",
+        "Cập nhật lên bản {}": "Update to Version {}",
+        "Đang cập nhật…": "Updating…",
+        "Thêm tuỳ chọn. Có bản mới": "More options. An update is available",
+        "Không kiểm tra được: {}": "Couldn’t check: {}",
+        "Không cập nhật được": "Couldn’t update",
+        "Mở trang tải": "Open Download Page",
+        "GitHub trả lời mã {}.": "GitHub answered with code {}.",
+        "TwodayNote đang chạy từ chỗ tạm của macOS. Kéo app vào thư mục Applications rồi mở lại.":
+            "TwodayNote is running from a temporary place macOS made. Drag the app into Applications and open it again.",
+        "Không có quyền ghi vào {}. Tải bản mới từ GitHub và cài bằng tay.":
+            "No permission to write to {}. Download the new version from GitHub and install it by hand.",
+        "Trong file tải về không có TwodayNote.": "The download has no TwodayNote in it.",
+        "App trong file tải về không phải TwodayNote.": "The app in the download isn’t TwodayNote.",
+        "File tải về là bản {}, không khớp với bản trên GitHub.": "The download is version {}, not the one on GitHub.",
+        "Chữ ký của app tải về không hợp lệ.": "The downloaded app’s signature isn’t valid.",
+        "App tải về được ký bởi người khác.": "The downloaded app is signed by someone else.",
+        "{} báo lỗi: {}": "{} failed: {}",
+
         // Menu bar and menus
         "TwodayNote, còn {} việc": "TwodayNote, {} to do",
         "Sửa": "Edit",

@@ -129,8 +129,22 @@ private struct MoreMenu: View {
     @Environment(AppModel.self) private var model
     let hasDone: Bool
 
+    private var updater = Updater.shared
+
+    init(hasDone: Bool) {
+        self.hasDone = hasDone
+    }
+
     var body: some View {
         Menu {
+            if let release = updater.release {
+                // A newer TwodayNote on GitHub (Updater.swift).
+                Button(updater.isAvailable ? L("Cập nhật lên bản {}", release.version?.description ?? release.tag)
+                                           : L("Đang cập nhật…"),
+                       systemImage: "arrow.down.circle") { updater.install() }
+                    .disabled(!updater.isAvailable)
+                Divider()
+            }
             Button(L("Xoá việc đã xong"), systemImage: "checkmark.circle.badge.xmark") { model.clearDone() }
                 .disabled(!hasDone)
             Divider()
@@ -142,6 +156,16 @@ private struct MoreMenu: View {
                 .font(.title3)
                 // As bright as the title, not the faded borderless gray.
                 .foregroundStyle(.primary)
+                // A dot while a newer version waits.
+                .overlay(alignment: .topTrailing) {
+                    if updater.release != nil {
+                        Circle()
+                            .fill(Palette.accent)
+                            // A ring in the background color cuts it out of the symbol.
+                            .overlay { Circle().stroke(.background, lineWidth: 2) }
+                            .frame(width: Space.sm, height: Space.sm)
+                    }
+                }
                 .contentShape(.rect)
         }
         .menuStyle(.button)
@@ -149,8 +173,8 @@ private struct MoreMenu: View {
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help(L("Thêm tuỳ chọn"))
-        .accessibilityLabel(L("Thêm tuỳ chọn"))
+        .help(updater.release == nil ? L("Thêm tuỳ chọn") : L("Thêm tuỳ chọn. Có bản mới"))
+        .accessibilityLabel(updater.release == nil ? L("Thêm tuỳ chọn") : L("Thêm tuỳ chọn. Có bản mới"))
     }
 }
 

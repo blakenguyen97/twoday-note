@@ -7,6 +7,8 @@ struct SettingsView: View {
     var body: some View {
         Form {
             GeneralSettings()
+            // Second, so the version and an update waiting show without scrolling.
+            UpdateSettings()
             ShortcutList()
             AppearanceSettings()
         }
@@ -67,6 +69,72 @@ struct GeneralSettings: View {
                 Text(L("Chuyển việc chưa xong sang hôm nay"))
                 Text(L("Task chưa tick của những ngày trước tự lên đầu danh sách hôm nay."))
             }
+        }
+    }
+}
+
+/// The version, the daily check, and the update button.
+private struct UpdateSettings: View {
+    @AppStorage(Updater.autoCheckKey) private var autoCheck = true
+    private var updater = Updater.shared
+
+    var body: some View {
+        Section(L("Cập nhật")) {
+            LabeledContent(L("Phiên bản"), value: Updater.versionText)
+                .textSelection(.enabled)
+            Toggle(isOn: $autoCheck) {
+                Text(L("Tự kiểm tra bản mới mỗi ngày"))
+                Text(L("Có bản mới trên GitHub thì cập nhật bằng một nút, không phải tải và cài lại."))
+            }
+            .onChange(of: autoCheck) { _, on in if on { updater.checkIfDue() } }
+            LabeledContent {
+                controls
+            } label: {
+                Text(status)
+                if let detail {
+                    Text(detail)
+                }
+            }
+        }
+    }
+
+    private var status: String {
+        switch updater.phase {
+        case .idle: updater.lastCheck == nil ? L("Chưa kiểm tra") : L("Đây là bản mới nhất")
+        case .checking: L("Đang kiểm tra…")
+        case .upToDate: L("Đây là bản mới nhất")
+        case .available(let release): L("Có bản {}", release.version?.description ?? release.tag)
+        case .installing(let release): L("Đang cài bản {}…", release.version?.description ?? release.tag)
+        }
+    }
+
+    /// Under the status: what went wrong, the release's name, or the last check.
+    private var detail: String? {
+        if let problem = updater.problem { return problem }
+        switch updater.phase {
+        case .available(let release): return release.name
+        case .installing: return L("TwodayNote sẽ tự mở lại khi xong.")
+        default:
+            return updater.lastCheck.map {
+                L("Kiểm tra lần cuối {}", $0.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened)
+                    .locale(Lang.current.locale)))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var controls: some View {
+        switch updater.phase {
+        case .checking, .installing:
+            ProgressView().controlSize(.small)
+        case .available(let release):
+            HStack(spacing: Space.sm) {
+                Link(L("Có gì mới"), destination: release.page)
+                Button(L("Cập nhật và mở lại")) { updater.install() }
+                    .buttonStyle(.borderedProminent)
+            }
+        case .idle, .upToDate:
+            Button(L("Kiểm tra ngay")) { Task { await updater.check() } }
         }
     }
 }

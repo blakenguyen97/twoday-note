@@ -1,12 +1,13 @@
 import AppKit
 import IOKit.pwr_mgt
 import SwiftUI
+import TwodayNoteKit
 
 /// Screenshot mode for agents.
 ///   APP_STORE=/tmp/TwodayNote-test.json APP_SNAPSHOT=/tmp/shots ~/Applications/TwodayNote.app/Contents/MacOS/TwodayNote
 /// opens the popover from the menu bar and writes day0-light.png, day0-dark.png
 /// … for each day, later-light.png (Xem sau), image-light.png (the image viewer), guide0-light.png …
-/// (each page of the guide), plus settings-light.png
+/// (each page of the guide), plus settings-light.png, update-light.png (a newer release waiting)
 /// and settings-dark.png, then quits.
 /// Each PNG gets a <name>-layout.json with the grid probes (tools/check-layout.swift).
 /// APP_SNAPSHOT_PAGES=day0,settings limits the pages.
@@ -87,10 +88,34 @@ enum Snapshot {
                     capture(app.settings, to: "\(dir)/settings-\(mode).png")
                     app.settings?.close()
                 }
+                if only == nil || only?.contains("update") == true {
+                    // Settings and the ••• dot with a newer release waiting.
+                    Updater.shared.consider(Snapshot.sampleRelease)
+                    app.showSettings(nil)
+                    try? await Task.sleep(for: .seconds(0.8))
+                    capture(app.settings, to: "\(dir)/update-\(mode).png")
+                    app.settings?.close()
+                    app.showPopover()
+                    app.model.dayOffset = 0
+                    try? await Task.sleep(for: .seconds(0.8))
+                    capture(app.popoverWindow, to: "\(dir)/update-popover-\(mode).png")
+                    Updater.shared.reset()
+                }
             }
             print("SNAPSHOT done \(dir)")
             NSApp.terminate(nil)
         }
+    }
+
+    /// A release one version ahead of this copy, for the update shots.
+    static var sampleRelease: Release {
+        // 0.3 → 0.4: one more in the last number.
+        var parts = AppVersion(Updater.version)?.parts ?? [0]
+        parts[parts.count - 1] += 1
+        let tag = "v" + parts.map(String.init).joined(separator: ".")
+        let page = URL(string: "https://github.com/\(Updater.repo)/releases/tag/\(tag)")!
+        return Release(tag: tag, name: "TwodayNote \(tag.dropFirst())", page: page,
+                       assets: [.init(name: "TwodayNote-\(tag.dropFirst()).dmg", url: page, size: 1)])
     }
 
     /// Captures the real window with screencapture, so materials and glass

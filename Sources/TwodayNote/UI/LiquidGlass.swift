@@ -37,13 +37,7 @@ enum LiquidGlass {
 
     /// Quits and opens the app again, so the new setting takes effect.
     static func relaunch() {
-        let path = Bundle.main.bundleURL.path
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/bin/sh")
-        // Waits for this copy to quit, then opens the app again.
-        task.arguments = ["-c", "while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.1; done; open \"$0\"", path]
-        try? task.run()
-        NSApp.terminate(nil)
+        Relaunch.now()
     }
 }
 

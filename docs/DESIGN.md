@@ -68,6 +68,7 @@ gom nhóm.
 | Hoàn tác xoá | thông báo nhỏ trên thanh Focus | — |
 | Tập trung (Pomodoro) | thanh Focus dưới đáy: chọn 15/25/45/60 phút, Bắt đầu, Tạm dừng, Tiếp tục, Dừng | — |
 | Hướng dẫn sử dụng | menu •••; tự mở lần đầu | ← → lật trang, Return tiếp, Esc đóng |
+| Cập nhật lên bản mới | menu ••• (có chấm trên nút ••• khi có bản mới), Cài đặt > Cập nhật | — |
 | Cài đặt | menu ••• | ⌘, |
 | Thoát | menu ••• | ⌘Q |
 
@@ -81,6 +82,20 @@ checkbox tự tick, menu chuột phải mở ra, đồng hồ Focus đếm ngư�
 Demo chỉ chạy khi trang đang hiện; Reduce Motion và snapshot thấy một khung
 đứng yên. Đóng hay bấm "Bắt đầu dùng" ở trang cuối thì không tự mở lại nữa
 (`guide.seen`); mở lại bằng ••• > Hướng dẫn sử dụng.
+
+## Cập nhật
+
+Cài đặt > Cập nhật hiện phiên bản ("0.4 (202611051659)") và công tắc "Tự kiểm
+tra bản mới mỗi ngày" (mặc định bật). Mỗi ngày một lần (lúc mở app, mỗi giờ
+xem đã đủ một ngày chưa, và sau khi Mac thức dậy), app đọc release mới nhất
+của GitHub `blakenguyen97/twoday-note`. Mất mạng thì giờ sau thử lại.
+
+Có bản mới: chấm màu nhấn trên nút •••, mục "Cập nhật lên bản …" đầu menu
+•••, và trong Cài đặt có "Có gì mới" (trang release) với "Cập nhật và mở lại".
+Bấm là app tải DMG của release, kiểm tra app bên trong (cùng bundle id, đúng
+số phiên bản, chữ ký hợp lệ, cùng team nếu bản đang chạy có team), thay vào
+đúng chỗ bản đang chạy và tự mở lại. Ghi chú không bị đụng tới. Không ghi được
+vào thư mục app thì báo lỗi kèm nút "Mở trang tải".
 
 ## Ngôn ngữ và giao diện
 

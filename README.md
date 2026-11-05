@@ -34,6 +34,7 @@
 - **Nothing falls through.** Unfinished tasks from earlier days move to the top of today, marked with the day they came from.
 - **Count in the icon.** The menu bar icon shows how many tasks are left today, and goes blank when you're done.
 - **Focus timer.** A 15, 25, 45, or 60 minute countdown at the bottom of the popover. The time left runs next to the menu bar icon, and a sound plays when it's over.
+- **Updates itself.** Once a day it checks GitHub for a newer release; one click downloads it, swaps it in, and opens it again. The version is in Settings.
 - **Settings.** Language, launch at login, global shortcut, menu bar count, carry-over, light or dark mode, Liquid Glass on or off (off gives the classic look from before macOS 26), and accent color.
 
 The interface is in Vietnamese or English (Settings > Chung > Ngôn ngữ).
@@ -94,6 +95,7 @@ There is no account, sync, or network access.
 | Screenshots in light and dark mode | `tools/snap.sh` → `/tmp/TwodayNote-shots/` |
 | Spacing check | `tools/grid-lint.sh` |
 | Release DMG (universal, ad hoc signed) | `tools/release.sh` → `dist/TwodayNote-<version>.dmg` |
+| Publish an update | Raise `CFBundleShortVersionString` in `Info.plist.in`, run `tools/release.sh`, then make a GitHub release tagged `v<version>` with the DMG attached. Installed copies find it within a day and update in place. |
 
 `tools/snap.sh` opens the popover and takes keyboard focus for a few seconds while it runs.
 
