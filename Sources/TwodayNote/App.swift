@@ -96,10 +96,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         popover.performClose(nil)
     }
 
+    /// ⌘V: an image on the clipboard goes into the popover's blocks; text
+    /// pastes into the focused field as usual.
+    @objc func pasteNote(_ sender: Any?) {
+        if NSApp.keyWindow === popoverWindow, model.viewer == nil, model.pasteImages() { return }
+        NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: sender)
+    }
+
     var popoverWindow: NSWindow? { popover.contentViewController?.view.window }
 
     func popoverDidClose(_ notification: Notification) {
         model.undo = nil
+        model.viewer = nil
         model.flush()
     }
 
@@ -229,7 +237,8 @@ enum MainMenu {
         edit.addItem(.separator())
         edit.addItem(withTitle: "Cắt", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
         edit.addItem(withTitle: "Sao chép", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        edit.addItem(withTitle: "Dán", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        // Images or text: AppDelegate.pasteNote decides.
+        edit.addItem(withTitle: "Dán", action: #selector(AppDelegate.pasteNote(_:)), keyEquivalent: "v")
         edit.addItem(withTitle: "Chọn tất cả", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         main.addItem(submenu: edit)
         return main

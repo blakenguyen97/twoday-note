@@ -135,9 +135,57 @@ struct NotebookTests {
     @Test func survivesJSON() throws {
         var book = Notebook()
         book.add("Gọi Lan", defaultKind: .task, day: today)
+        book.add("* Logo", defaultKind: .task, day: today, images: ["a.png"])
         let data = try JSONEncoder().encode(book)
         let back = try JSONDecoder().decode(Notebook.self, from: data)
         #expect(back.entries == book.entries)
+        #expect(back.entries.last?.images == ["a.png"])
+    }
+
+    @Test func readsNotesSavedBeforeImages() throws {
+        let json = #"{"version":1,"entries":[{"id":"6E1F8C2A-4B7D-4F0E-9C3A-2D5B8E7F1A40","text":"Gọi Lan","kind":"task","isDone":false,"day":0,"order":0,"createdAt":0}]}"#
+        let book = try JSONDecoder().decode(Notebook.self, from: Data(json.utf8))
+        #expect(book.entries.first?.images == [])
+    }
+
+    @Test func imageOnlyBlocks() {
+        var book = Notebook()
+        #expect(book.add("", defaultKind: .task, day: today) == nil)
+        let shot = book.add("", defaultKind: .task, day: today, images: ["a.png"])
+        #expect(shot?.text == "")
+        #expect(shot?.kind == .task)
+        #expect(book.add("* ", defaultKind: .task, day: today, images: ["b.png"])?.kind == .idea)
+        // Clearing the text keeps a block that still has an image.
+        #expect(book.commitText(shot!.id) == nil)
+        #expect(book.imageNames == ["a.png", "b.png"])
+    }
+
+    @Test func finishingATaskDropsItsImages() {
+        var book = Notebook()
+        let task = book.add("Sửa logo", defaultKind: .task, day: today, images: ["a.png"])!
+        book.attach(["b.png", "a.png"], to: task.id)
+        #expect(book.entries[0].images == ["a.png", "b.png"])
+        let before = book.toggleDone(task.id)
+        #expect(before?.images == ["a.png", "b.png"])
+        #expect(book.entries[0].isDone)
+        #expect(book.imageNames.isEmpty)
+        // Undo puts the task back unfinished, with its images.
+        book.restore([before!])
+        #expect(!book.entries[0].isDone)
+        #expect(book.entries[0].images == ["a.png", "b.png"])
+        // A task without images gives nothing to undo.
+        let plain = book.add("Gọi Lan", defaultKind: .task, day: today)!
+        #expect(book.toggleDone(plain.id) == nil)
+    }
+
+    @Test func detachesOneImage() {
+        var book = Notebook()
+        let idea = book.add("* Màn hình", defaultKind: .task, day: today, images: ["a.png", "b.png"])!
+        let before = book.detach("a.png", from: idea.id)
+        #expect(book.entries[0].images == ["b.png"])
+        #expect(book.detach("x.png", from: idea.id) == nil)
+        book.restore([before!])
+        #expect(book.entries[0].images == ["a.png", "b.png"])
     }
 }
 

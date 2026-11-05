@@ -14,9 +14,16 @@ public struct Entry: Codable, Identifiable, Hashable, Sendable {
     public var doneAt: Date?
     /// The day an unfinished task first belonged to, before it carried over.
     public var carriedFrom: Date?
+    /// Pasted images: file names in the store's image folder, in paste order.
+    public var images: [String] {
+        get { imageFiles ?? [] }
+        set { imageFiles = newValue.isEmpty ? nil : newValue }
+    }
+    /// Optional, so notes saved before images existed still load.
+    private var imageFiles: [String]?
 
     public init(id: UUID = UUID(), text: String, kind: EntryKind, day: Date, order: Double,
-                isDone: Bool = false, createdAt: Date = .now) {
+                isDone: Bool = false, createdAt: Date = .now, images: [String] = []) {
         self.id = id
         self.text = text
         self.kind = kind
@@ -24,6 +31,7 @@ public struct Entry: Codable, Identifiable, Hashable, Sendable {
         self.order = order
         self.isDone = isDone
         self.createdAt = createdAt
+        self.images = images
     }
 }
 
@@ -56,22 +64,49 @@ public struct Notebook: Codable, Sendable {
         entries.firstIndex { $0.id == id }
     }
 
+    /// Every image file a block uses.
+    public var imageNames: Set<String> {
+        Set(entries.flatMap(\.images))
+    }
+
     // MARK: Changing
 
-    /// Adds what people typed to the end of `day`. Nil when it is empty.
+    /// Adds what people typed, and any pasted images, to the end of `day`.
+    /// Nil when there is neither text nor an image.
     @discardableResult
-    public mutating func add(_ raw: String, defaultKind: EntryKind, day: Date) -> Entry? {
-        guard let parsed = EntryInput.parse(raw, defaultKind: defaultKind) else { return nil }
+    public mutating func add(_ raw: String, defaultKind: EntryKind, day: Date, images: [String] = []) -> Entry? {
+        guard let parsed = EntryInput.parse(raw, defaultKind: defaultKind, allowEmpty: !images.isEmpty) else { return nil }
         let entry = Entry(text: parsed.text, kind: parsed.kind, day: day,
-                          order: (entries(on: day).last?.order ?? -1) + 1)
+                          order: (entries(on: day).last?.order ?? -1) + 1, images: images)
         entries.append(entry)
         return entry
     }
 
-    public mutating func toggleDone(_ id: UUID, now: Date = .now) {
-        guard let i = index(of: id), entries[i].kind == .task else { return }
+    /// Checks or unchecks a task. Finishing a task drops its images; then
+    /// this returns the task as it was, so the app can offer Undo.
+    @discardableResult
+    public mutating func toggleDone(_ id: UUID, now: Date = .now) -> Entry? {
+        guard let i = index(of: id), entries[i].kind == .task else { return nil }
+        let before = entries[i]
         entries[i].isDone.toggle()
         entries[i].doneAt = entries[i].isDone ? now : nil
+        guard entries[i].isDone, !entries[i].images.isEmpty else { return nil }
+        entries[i].images = []
+        return before
+    }
+
+    /// Adds pasted images to the end of a block's images.
+    public mutating func attach(_ names: [String], to id: UUID) {
+        guard let i = index(of: id), !names.isEmpty else { return }
+        entries[i].images += names.filter { !entries[i].images.contains($0) }
+    }
+
+    /// Takes one image off a block and returns the block as it was, for Undo.
+    public mutating func detach(_ name: String, from id: UUID) -> Entry? {
+        guard let i = index(of: id), entries[i].images.contains(name) else { return nil }
+        let before = entries[i]
+        entries[i].images.removeAll { $0 == name }
+        return before
     }
 
     public mutating func setKind(_ id: UUID, _ kind: EntryKind) {
@@ -104,12 +139,16 @@ public struct Notebook: Codable, Sendable {
         }
     }
 
-    /// Tidies the text after editing. Removes the block when nothing is left
-    /// and returns it, so the app can offer Undo.
+    /// Tidies the text after editing. Removes the block when no text and no
+    /// image is left and returns it, so the app can offer Undo.
     public mutating func commitText(_ id: UUID) -> Entry? {
         guard let i = index(of: id) else { return nil }
         if let clean = EntryText.clean(entries[i].text) {
             entries[i].text = clean
+            return nil
+        }
+        guard entries[i].images.isEmpty else {
+            entries[i].text = ""
             return nil
         }
         return entries.remove(at: i)
@@ -122,10 +161,12 @@ public struct Notebook: Codable, Sendable {
         return removed
     }
 
-    /// Puts removed blocks back where they were (Undo).
-    public mutating func restore(_ removed: [Entry]) {
-        let present = Set(entries.map(\.id))
-        entries.append(contentsOf: removed.filter { !present.contains($0.id) })
+    /// Puts blocks back as they were (Undo): removed ones return, changed
+    /// ones get their old state back.
+    public mutating func restore(_ saved: [Entry]) {
+        for entry in saved {
+            if let i = index(of: entry.id) { entries[i] = entry } else { entries.append(entry) }
+        }
     }
 
     /// Moves unfinished tasks from earlier days to the top of today, oldest

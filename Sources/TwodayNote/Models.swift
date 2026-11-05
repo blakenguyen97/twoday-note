@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Observation
 import TwodayNoteKit
 
@@ -13,8 +13,17 @@ final class AppModel {
     var newKind: EntryKind = .task
     /// Bumped each time the popover opens, so the add field takes focus.
     var focusTick = 0
-    /// The last removal, while its Undo is on screen.
-    var undo: UndoNotice?
+    /// The last removal, while its Undo is on screen. Image files the
+    /// notice no longer covers are deleted when it changes.
+    var undo: UndoNotice? {
+        didSet { if undo?.id != oldValue?.id { pruneImages() } }
+    }
+    /// The block whose text is being edited: ⌘V puts images there.
+    var editingID: UUID?
+    /// Images pasted into the add field, waiting for Return.
+    var pendingImages: [String] = []
+    /// The image shown large over the popover.
+    var viewer: ImageViewer?
     private(set) var today = Day.start(of: .now)
 
     /// The Focus countdown at the bottom of the popover.
@@ -32,6 +41,7 @@ final class AppModel {
 
     init() {
         book = Store.load()
+        pruneImages()
     }
 
     var selectedDay: Date { Day.adding(dayOffset, to: today) }
@@ -42,14 +52,65 @@ final class AppModel {
     // MARK: Changes
 
     func add(_ raw: String) -> Bool {
-        guard book.add(raw, defaultKind: newKind, day: selectedDay) != nil else { return false }
+        guard book.add(raw, defaultKind: newKind, day: selectedDay, images: pendingImages) != nil else { return false }
+        pendingImages = []
         changed()
         return true
     }
 
+    /// Finishing a task deletes its images, with Undo.
     func toggleDone(_ id: UUID) {
-        book.toggleDone(id)
+        if let before = book.toggleDone(id) {
+            undo = UndoNotice(message: "Đã xong, xoá \(before.images.count) ảnh", entries: [before])
+        }
         changed()
+    }
+
+    // MARK: Images
+
+    /// ⌘V with an image: adds it to the block being edited, to `id`, or
+    /// else to the add field until Return. False when the pasteboard holds
+    /// no image, so the paste goes to the text field as usual.
+    func pasteImages(from pasteboard: NSPasteboard = .general, into id: UUID? = nil) -> Bool {
+        guard let names = ImageStore.save(from: pasteboard) else { return false }
+        let target = id ?? editingID
+        if let target, let entry = book.entries.first(where: { $0.id == target }), !entry.isDone {
+            book.attach(names, to: target)
+            changed()
+        } else {
+            pendingImages += names
+            focusTick += 1
+        }
+        return true
+    }
+
+    func removeImage(_ name: String, from id: UUID) {
+        guard let before = book.detach(name, from: id) else { return }
+        if viewer?.name == name { viewer = nil }
+        undo = UndoNotice(message: "Đã xoá ảnh", entries: [before])
+        changed()
+    }
+
+    func removePendingImage(_ name: String) {
+        pendingImages.removeAll { $0 == name }
+        if viewer?.name == name { viewer = nil }
+        pruneImages()
+    }
+
+    /// The images the viewer pages through: its block's, or the pending ones.
+    var viewerImages: [String] {
+        guard let viewer else { return [] }
+        guard let id = viewer.entryID else { return pendingImages }
+        return book.entries.first { $0.id == id }?.images ?? []
+    }
+
+    /// Deletes image files that no block, pending paste, or Undo uses.
+    private func pruneImages() {
+        // The images of an unreadable notes file may still be wanted.
+        guard !Store.loadFailed else { return }
+        var keep = book.imageNames.union(pendingImages)
+        keep.formUnion(undo?.entries.flatMap(\.images) ?? [])
+        ImageStore.prune(keeping: keep)
     }
 
     func setKind(_ id: UUID, _ kind: EntryKind) {
@@ -113,6 +174,7 @@ final class AppModel {
     /// For the self-test and seed data only.
     func replace(_ notebook: Notebook) {
         book = notebook
+        undo = nil
         changed()
     }
 
@@ -133,6 +195,12 @@ final class AppModel {
         saveTask?.cancel()
         Store.save(book)
     }
+}
+
+/// The image shown large: one of a block's images, or a pending one (no block).
+struct ImageViewer: Equatable {
+    var entryID: UUID?
+    var name: String
 }
 
 struct UndoNotice: Identifiable {
@@ -170,6 +238,9 @@ enum Store {
         return dir.appending(path: "notes.json")
     }
 
+    /// True when the notes file existed but could not be read.
+    private(set) static var loadFailed = false
+
     static func load() -> Notebook {
         guard let data = try? Data(contentsOf: url) else { return Notebook() }
         do {
@@ -179,6 +250,7 @@ enum Store {
             let backup = url.deletingPathExtension().appendingPathExtension("broken-\(Int(Date.now.timeIntervalSince1970)).json")
             try? FileManager.default.copyItem(at: url, to: backup)
             print("Could not read \(url.path), saved a copy at \(backup.path): \(error)")
+            loadFailed = true
             return Notebook()
         }
     }

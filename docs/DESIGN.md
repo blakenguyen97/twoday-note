@@ -21,6 +21,9 @@ segmented control. Mỗi ngày là một danh sách khối (block):
 | Ý tưởng | bóng đèn | `* ` |
 | Tiêu đề | chữ đậm, không thẻ | `# ` |
 
+Mỗi khối có thể kèm ảnh dán bằng ⌘V, hiện thành hàng thumbnail dưới chữ.
+Khối chỉ có ảnh, không chữ, vẫn được giữ.
+
 Task chưa xong của những ngày trước tự chuyển sang hôm nay (bật/tắt trong
 Cài đặt) và ghi "từ T4" để biết nó bị dời.
 
@@ -34,6 +37,9 @@ Cài đặt) và ghi "từ T4" để biết nó bị dời.
 | Chọn ngày | segmented control | ⌘1 ⌘2 ⌘3 |
 | Đánh dấu xong | checkbox | — |
 | Sửa nội dung | bấm vào chữ | Return để xong |
+| Dán ảnh | vào khối đang sửa, hoặc chờ dưới ô nhập tới khi Return; menu chuột phải > Dán ảnh | ⌘V |
+| Xem ảnh lớn | bấm vào thumbnail; phủ kín popover | Esc đóng, ← → chuyển ảnh |
+| Sao chép / xoá ảnh / mở bằng Xem trước | menu chuột phải trên ảnh, thanh trên trình xem ảnh | — |
 | Đổi loại / dời ngày / xoá | menu chuột phải | — |
 | Sắp xếp lại | kéo thả | — |
 | Xoá việc đã xong | menu ••• | — |
@@ -48,6 +54,12 @@ Cài đặt) và ghi "từ T4" để biết nó bị dời.
 trên thanh menu (mờ khi tạm dừng), nên không cần mở popover. Hết giờ: tiếng
 "Glass", thanh menu ghi "Hết giờ" cho tới khi bắt đầu phiên mới hoặc đóng.
 Không lưu qua lần mở lại app.
+
+## Ảnh
+
+Ảnh lưu thành file trong `Images/` cạnh `notes.json`; khối chỉ giữ tên file.
+Đánh dấu xong một task là xoá ảnh của nó, có Hoàn tác. File chỉ bị xoá thật
+khi không còn khối, ảnh chờ, hay Hoàn tác nào dùng tới.
 
 ## Empty states
 

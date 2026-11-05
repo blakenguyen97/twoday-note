@@ -60,15 +60,18 @@ public enum EntryText {
 /// Turns what people type into a block: "# Sáng nay" is a heading,
 /// "* Widget" an idea, "- Wifi" a note, "[] Gọi Lan" a task.
 public enum EntryInput {
-    public static func parse(_ raw: String, defaultKind: EntryKind) -> (kind: EntryKind, text: String)? {
+    /// Nil when there is no text, unless `allowEmpty` (a block made of a
+    /// pasted image): then the kind still comes from the prefix.
+    public static func parse(_ raw: String, defaultKind: EntryKind, allowEmpty: Bool = false) -> (kind: EntryKind, text: String)? {
         // Only the leading spaces: "# " alone is a prefix with no text.
-        let trimmed = String(raw.drop { $0 == " " || $0 == "\t" })
-        for kind in EntryKind.allCases where trimmed.hasPrefix(kind.prefix) {
-            guard let text = EntryText.clean(String(trimmed.dropFirst(kind.prefix.count))) else { return nil }
-            return (kind, text)
+        var body = String(raw.drop { $0 == " " || $0 == "\t" })
+        var kind = defaultKind
+        if let match = EntryKind.allCases.first(where: { body.hasPrefix($0.prefix) }) {
+            kind = match
+            body = String(body.dropFirst(match.prefix.count))
         }
-        guard let text = EntryText.clean(trimmed) else { return nil }
-        return (defaultKind, text)
+        if let text = EntryText.clean(body) { return (kind, text) }
+        return allowEmpty ? (kind, "") : nil
     }
 }
 

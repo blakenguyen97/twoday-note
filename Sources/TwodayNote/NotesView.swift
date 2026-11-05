@@ -30,7 +30,16 @@ struct NotesView: View {
         .padding(.top, Space.lg)
         .frame(width: Self.size.width, height: Self.size.height, alignment: .top)
         .background { DayShortcuts() }
-        .onExitCommand { AppDelegate.shared.closePopover() }
+        .overlay {
+            if let viewer = model.viewer {
+                ImageViewerView(viewer: viewer)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.snappy, value: model.viewer)
+        .onExitCommand {
+            if model.viewer != nil { model.viewer = nil } else { AppDelegate.shared.closePopover() }
+        }
         .gridArea("popover", inset: Space.lg)
     }
 }
@@ -130,9 +139,18 @@ private struct AddField: View {
     @FocusState private var focused: Bool
 
     var body: some View {
+        VStack(alignment: .leading, spacing: Space.sm) {
+            field
+            if !model.pendingImages.isEmpty {
+                ImageStrip(names: model.pendingImages, entryID: nil)
+            }
+        }
+    }
+
+    private var field: some View {
         @Bindable var model = model
         let text = text.projectedValue
-        HStack(spacing: Space.sm) {
+        return HStack(spacing: Space.sm) {
             Menu {
                 Picker("Loại khối mới", selection: $model.newKind) {
                     ForEach(EntryKind.allCases) { kind in
@@ -148,7 +166,7 @@ private struct AddField: View {
             .buttonStyle(.borderless)
             .menuIndicator(.hidden)
             .fixedSize()
-            .help("Loại khối mới. Gõ nhanh: “# ” tiêu đề, “- ” ghi chú, “* ” ý tưởng, “[] ” task")
+            .help("Loại khối mới. Gõ nhanh: “# ” tiêu đề, “- ” ghi chú, “* ” ý tưởng, “[] ” task. ⌘V dán ảnh")
             .accessibilityLabel("Loại khối mới: \(model.newKind.title)")
 
             TextField(model.newKind.placeholder, text: text)
@@ -167,6 +185,7 @@ private struct AddField: View {
                 .strokeBorder(focused ? AnyShapeStyle(Palette.accent.opacity(0.6)) : AnyShapeStyle(.separator), lineWidth: 1)
         }
         .onChange(of: model.focusTick) { focused = true }
+        .onChange(of: focused) { _, now in if now { model.editingID = nil } }
         .onAppear { focused = true }
     }
 }
@@ -251,7 +270,14 @@ private struct EntryRow: View {
         .contentShape(.rect)
         .contextMenu { EntryMenu(entry: entry) }
         .onChange(of: draft) { _, new in model.setText(entry.id, new) }
-        .onChange(of: editing) { _, now in if !now { model.commitText(entry.id) } }
+        .onChange(of: editing) { _, now in
+            if now {
+                model.editingID = entry.id
+            } else {
+                if model.editingID == entry.id { model.editingID = nil }
+                model.commitText(entry.id)
+            }
+        }
         .onChange(of: entry.text) { _, new in if !editing, draft != new { draft = new } }
     }
 
@@ -277,15 +303,27 @@ private struct EntryRow: View {
         }
     }
 
-    @ViewBuilder
     private var content: some View {
+        VStack(alignment: .leading, spacing: Space.sm) {
+            text
+            if !entry.images.isEmpty {
+                ImageStrip(names: entry.images, entryID: entry.id)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var text: some View {
         if entry.isDone {
-            Text(entry.text)
+            // A task that was only an image keeps a word, not an empty line.
+            Text(entry.text.isEmpty ? "Ảnh" : entry.text)
                 .strikethrough()
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            TextField(entry.kind.title, text: draftState.projectedValue, axis: .vertical)
+            TextField(entry.images.isEmpty ? entry.kind.title : "Thêm mô tả…",
+                      text: draftState.projectedValue, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(entry.kind == .heading ? .title3.weight(.semibold) : .body)
                 .focused($editing)
@@ -302,6 +340,11 @@ private struct EntryMenu: View {
         if entry.kind == .task {
             Button(entry.isDone ? "Đánh dấu chưa xong" : "Đánh dấu đã xong") { model.toggleDone(entry.id) }
         }
+        if !entry.isDone {
+            Button("Dán ảnh", systemImage: "photo.badge.plus") {
+                if !model.pasteImages(into: entry.id) { NSSound.beep() }
+            }
+        }
         Menu("Chuyển thành") {
             ForEach(EntryKind.allCases.filter { $0 != entry.kind }) { kind in
                 Button(kind.title, systemImage: kind.symbol) { model.setKind(entry.id, kind) }
@@ -314,6 +357,148 @@ private struct EntryMenu: View {
         }
         Divider()
         Button("Xoá", role: .destructive) { model.delete(entry.id) }
+    }
+}
+
+// MARK: Images
+
+/// Pasted images in a row of thumbnails. Click one to see it large.
+/// `entryID` nil: the add field's images, waiting for Return.
+private struct ImageStrip: View {
+    @Environment(AppModel.self) private var model
+    let names: [String]
+    let entryID: UUID?
+
+    static let side: CGFloat = 48
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: Space.sm) {
+                ForEach(names, id: \.self) { name in
+                    thumbnail(name)
+                }
+            }
+        }
+        .scrollBounceBehavior(.basedOnSize)
+    }
+
+    private func thumbnail(_ name: String) -> some View {
+        Button {
+            model.viewer = ImageViewer(entryID: entryID, name: name)
+        } label: {
+            Group {
+                if let image = ImageStore.thumbnail(name) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Image(systemName: "photo")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: Self.side, height: Self.side)
+            .background(.fill.tertiary)
+            .clipShape(.rect(cornerRadius: Space.xs))
+            .overlay {
+                RoundedRectangle(cornerRadius: Space.xs).strokeBorder(.separator, lineWidth: 1)
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .help("Bấm để xem lớn")
+        .accessibilityLabel("Ảnh, bấm để xem lớn")
+        .contextMenu {
+            Button("Xem lớn", systemImage: "arrow.up.left.and.arrow.down.right") {
+                model.viewer = ImageViewer(entryID: entryID, name: name)
+            }
+            Button("Sao chép ảnh", systemImage: "doc.on.doc") { ImageStore.copy(name) }
+            Divider()
+            Button("Xoá ảnh", systemImage: "trash", role: .destructive) { remove(name) }
+        }
+    }
+
+    private func remove(_ name: String) {
+        if let entryID { model.removeImage(name, from: entryID) } else { model.removePendingImage(name) }
+    }
+}
+
+/// One image, large, over the whole popover. Esc or a click on the image
+/// closes it; arrows page through the block's other images.
+private struct ImageViewerView: View {
+    @Environment(AppModel.self) private var model
+    let viewer: ImageViewer
+
+    var body: some View {
+        let names = model.viewerImages
+        let index = names.firstIndex(of: viewer.name) ?? 0
+        VStack(spacing: Space.md) {
+            HStack(spacing: Space.sm) {
+                iconButton("Đóng", "xmark") { model.viewer = nil }
+                    .keyboardShortcut(.cancelAction)
+                Spacer(minLength: Space.sm)
+                if names.count > 1 {
+                    iconButton("Ảnh trước", "chevron.left") { show(names, index - 1) }
+                        .keyboardShortcut(.leftArrow, modifiers: [])
+                        .disabled(index == 0)
+                    Text("\(index + 1) / \(names.count)")
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                    iconButton("Ảnh sau", "chevron.right") { show(names, index + 1) }
+                        .keyboardShortcut(.rightArrow, modifiers: [])
+                        .disabled(index == names.count - 1)
+                }
+                Spacer(minLength: Space.sm)
+                iconButton("Mở bằng Xem trước", "arrow.up.forward.app") {
+                    NSWorkspace.shared.open(ImageStore.url(viewer.name))
+                }
+                iconButton("Sao chép ảnh", "doc.on.doc") { ImageStore.copy(viewer.name) }
+                iconButton("Xoá ảnh", "trash") { remove(names, index) }
+            }
+            .frame(height: Space.section)
+
+            Group {
+                if let image = NSImage(contentsOf: ImageStore.url(viewer.name)) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(.rect(cornerRadius: Space.xs))
+                        .accessibilityLabel("Ảnh")
+                } else {
+                    ContentUnavailableView("Không mở được ảnh", systemImage: "photo")
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(.rect)
+            .onTapGesture { model.viewer = nil }
+        }
+        .padding(Space.lg)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Content, not a floating control: a plain background, no glass.
+        .background(.background)
+        // Nothing types underneath while the image is open.
+        .onAppear { AppDelegate.shared.popoverWindow?.makeFirstResponder(nil) }
+        .onDisappear { model.focusTick += 1 }
+    }
+
+    private func show(_ names: [String], _ index: Int) {
+        guard names.indices.contains(index) else { return }
+        model.viewer?.name = names[index]
+    }
+
+    /// Deletes the shown image and moves to the next one, if any.
+    private func remove(_ names: [String], _ index: Int) {
+        let name = names[index]
+        let rest = names.filter { $0 != name }
+        let next = rest.isEmpty ? nil : rest[min(index, rest.count - 1)]
+        if let id = viewer.entryID { model.removeImage(name, from: id) } else { model.removePendingImage(name) }
+        model.viewer = next.map { ImageViewer(entryID: viewer.entryID, name: $0) }
+    }
+
+    private func iconButton(_ title: String, _ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(title, systemImage: symbol, action: action)
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderless)
+            .help(title)
     }
 }
 

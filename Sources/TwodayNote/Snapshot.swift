@@ -5,7 +5,8 @@ import SwiftUI
 /// Screenshot mode for agents.
 ///   APP_STORE=/tmp/TwodayNote-test.json APP_SNAPSHOT=/tmp/shots ~/Applications/TwodayNote.app/Contents/MacOS/TwodayNote
 /// opens the popover from the menu bar and writes day0-light.png, day0-dark.png
-/// … for each day, plus settings-light.png and settings-dark.png, then quits.
+/// … for each day, image-light.png (the image viewer), plus settings-light.png
+/// and settings-dark.png, then quits.
 /// Each PNG gets a <name>-layout.json with the grid probes (tools/check-layout.swift).
 /// APP_SNAPSHOT_PAGES=day0,settings limits the pages.
 enum Snapshot {
@@ -43,6 +44,16 @@ enum Snapshot {
                     try? await Task.sleep(for: .seconds(0.8))
                     capture(app.popoverWindow, to: "\(dir)/focus-\(mode).png")
                     app.model.focus.stop()
+                }
+                if only == nil || only?.contains("image") == true,
+                   let entry = app.model.book.entries(on: app.model.today).first(where: { $0.images.count > 1 }) {
+                    // Today with an idea's image open large.
+                    if !app.popover.isShown { app.showPopover() }
+                    app.model.dayOffset = 0
+                    app.model.viewer = ImageViewer(entryID: entry.id, name: entry.images[0])
+                    try? await Task.sleep(for: .seconds(0.8))
+                    capture(app.popoverWindow, to: "\(dir)/image-\(mode).png")
+                    app.model.viewer = nil
                 }
                 if only == nil || only?.contains("settings") == true {
                     app.showSettings(nil)

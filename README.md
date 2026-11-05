@@ -27,6 +27,7 @@
   | `# ` | Heading |
 
 - **Edit in place.** Click any text to change it, drag to reorder, right-click to change its kind, move it to another day, or delete it. Deletes can be undone.
+- **Paste images.** Press **⌘V** with an image on the clipboard: it goes into the block you're editing, or waits under the add field until you press Return. Click a thumbnail to see it large inside the popover. Finishing a task deletes its images (with Undo).
 - **Nothing falls through.** Unfinished tasks from earlier days move to the top of today, marked with the day they came from.
 - **Count in the icon.** The menu bar icon shows how many tasks are left today, and goes blank when you're done.
 - **Focus timer.** A 15, 25, 45, or 60 minute countdown at the bottom of the popover. The time left runs next to the menu bar icon, and a sound plays when it's over.
@@ -71,10 +72,11 @@ To start TwodayNote when you log in, turn on **Mở cùng macOS** in Settings (�
 
 ## Your data
 
-Everything stays on your Mac, in one JSON file:
+Everything stays on your Mac, in one JSON file and a folder of pasted images:
 
 ```
 ~/Library/Application Support/TwodayNote/notes.json
+~/Library/Application Support/TwodayNote/Images/
 ```
 
 There is no account, sync, or network access.
