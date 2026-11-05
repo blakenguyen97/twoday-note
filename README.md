@@ -27,7 +27,7 @@
   | `# ` | Heading |
 
 - **Edit in place.** Click any text to change it, drag to reorder, right-click to change its kind, move it to another day, or delete it. Deletes can be undone.
-- **Paste images.** Press **⌘V** with an image on the clipboard: it goes into the block you're editing, or waits under the add field until you press Return. Click a thumbnail to see it large inside the popover. Finishing a task deletes its images (with Undo).
+- **Paste images.** Press **⌘V** with an image on the clipboard: it goes into the block you're editing, or waits under the add field until you press Return. Click a thumbnail to see it large inside the popover; pinch, double-click, or **⌘= ⌘-** to zoom, and drag to move around. Finishing a task deletes its images (with Undo).
 - **Nothing falls through.** Unfinished tasks from earlier days move to the top of today, marked with the day they came from.
 - **Count in the icon.** The menu bar icon shows how many tasks are left today, and goes blank when you're done.
 - **Focus timer.** A 15, 25, 45, or 60 minute countdown at the bottom of the popover. The time left runs next to the menu bar icon, and a sound plays when it's over.

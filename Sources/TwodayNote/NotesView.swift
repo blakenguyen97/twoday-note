@@ -422,16 +422,19 @@ private struct ImageStrip: View {
     }
 }
 
-/// One image, large, over the whole popover. Esc or a click on the image
-/// closes it; arrows page through the block's other images.
+/// One image, large, over the whole popover. Esc closes it, arrows page
+/// through the block's other images. Pinch, double click, or ⌘= ⌘- ⌘0 zoom;
+/// zoomed in, drag or scroll to move around.
 private struct ImageViewerView: View {
     @Environment(AppModel.self) private var model
     let viewer: ImageViewer
+    // State as a stored property: the @State macro needs Xcode (see CLAUDE.md).
+    private let zoom = State(initialValue: ZoomControl())
 
     var body: some View {
         let names = model.viewerImages
         let index = names.firstIndex(of: viewer.name) ?? 0
-        VStack(spacing: Space.md) {
+        VStack(spacing: 0) {
             HStack(spacing: Space.sm) {
                 iconButton("Đóng", "xmark") { model.viewer = nil }
                     .keyboardShortcut(.cancelAction)
@@ -455,23 +458,16 @@ private struct ImageViewerView: View {
                 iconButton("Xoá ảnh", "trash") { remove(names, index) }
             }
             .frame(height: Space.section)
+            .padding([.horizontal, .top], Space.lg)
+            .padding(.bottom, Space.sm)
 
-            Group {
-                if let image = NSImage(contentsOf: ImageStore.url(viewer.name)) {
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(.rect(cornerRadius: Space.xs))
-                        .accessibilityLabel("Ảnh")
-                } else {
-                    ContentUnavailableView("Không mở được ảnh", systemImage: "photo")
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(.rect)
-            .onTapGesture { model.viewer = nil }
+            ZoomArea(name: viewer.name, control: zoom.wrappedValue)
+                // A new image starts fitted.
+                .id(viewer.name)
+
+            ZoomBar(control: zoom.wrappedValue)
+                .padding(.vertical, Space.sm)
         }
-        .padding(Space.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         // Content, not a floating control: a plain background, no glass.
         .background(.background)
@@ -499,6 +495,49 @@ private struct ImageViewerView: View {
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
             .help(title)
+    }
+}
+
+/// The image itself, read from disk once per image.
+private struct ZoomArea: View {
+    let name: String
+    let control: ZoomControl
+
+    var body: some View {
+        if let image = NSImage(contentsOf: ImageStore.url(name)) {
+            ZoomableImage(image: image, control: control)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ContentUnavailableView("Không mở được ảnh", systemImage: "photo")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+}
+
+/// − 100 % + under the image. The percentage fits the image back in.
+private struct ZoomBar: View {
+    let control: ZoomControl
+
+    var body: some View {
+        HStack(spacing: Space.md) {
+            Button("Thu nhỏ", systemImage: "minus.magnifyingglass") { control.zoomOut() }
+                .keyboardShortcut("-", modifiers: .command)
+                .disabled(control.isFitted)
+                .help("Thu nhỏ (⌘-)")
+            Button("\(control.percent) %") { control.fit() }
+                .keyboardShortcut("0", modifiers: .command)
+                .font(.callout.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .disabled(control.isFitted)
+                .help("Vừa khung (⌘0)")
+            Button("Phóng to", systemImage: "plus.magnifyingglass") { control.zoomIn() }
+                .keyboardShortcut("=", modifiers: .command)
+                .disabled(!control.canZoomIn)
+                .help("Phóng to (⌘=), hoặc nhấp đúp vào ảnh")
+        }
+        .labelStyle(.iconOnly)
+        .buttonStyle(.borderless)
+        .frame(height: Space.xxl)
     }
 }
 

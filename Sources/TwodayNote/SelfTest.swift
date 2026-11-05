@@ -103,6 +103,37 @@ enum SelfTest {
                 try? await Task.sleep(for: .seconds(0.05))
             }
             check("the popover opens and closes 10 times", app.popover.isShown)
+
+            // The image viewer zooms and pans.
+            board.clearContents()
+            board.setData(SampleImage.png(), forType: .png)
+            _ = model.pasteImages(from: board)
+            _ = model.add("Ảnh để phóng to")
+            let zoomed = model.visible.last!
+            model.viewer = ImageViewer(entryID: zoomed.id, name: zoomed.images[0])
+            try? await Task.sleep(for: .seconds(0.5))
+            let zoomView = ZoomScrollView.find(in: app.popoverWindow?.contentView)
+            check("a thumbnail opens the image fitted", zoomView?.isFitted == true && zoomView?.canPan == false)
+            zoomView?.zoom(by: 3)
+            try? await Task.sleep(for: .seconds(0.5))
+            check("zooming in lets the image be dragged", zoomView?.isFitted == false && zoomView?.canPan == true)
+            let before = zoomView?.contentView.bounds.origin
+            zoomView?.pan(by: CGSize(width: 40, height: 0))
+            check("dragging moves the image", zoomView?.contentView.bounds.origin != before)
+            zoomView?.fit()
+            try? await Task.sleep(for: .seconds(0.5))
+            check("⌘0 fits it back", zoomView?.isFitted == true && zoomView?.canPan == false)
+            zoomView?.zoom(by: 3)
+            model.viewer = nil
+            try? await Task.sleep(for: .seconds(1))
+            model.viewer = ImageViewer(entryID: zoomed.id, name: zoomed.images[0])
+            try? await Task.sleep(for: .seconds(0.5))
+            let reopened = ZoomScrollView.find(in: app.popoverWindow?.contentView)
+            check("the image opens fitted again after closing zoomed", reopened !== zoomView && reopened?.isFitted == true,
+                  "same view: \(reopened === zoomView), magnification \(reopened?.magnification ?? 0)")
+            model.viewer = nil
+            model.delete(zoomed.id)
+            model.undo = nil
             app.closePopover()
 
             // Focus.

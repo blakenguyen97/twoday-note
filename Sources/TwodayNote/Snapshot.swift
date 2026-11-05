@@ -53,7 +53,13 @@ enum Snapshot {
                     app.model.viewer = ImageViewer(entryID: entry.id, name: entry.images[0])
                     try? await Task.sleep(for: .seconds(0.8))
                     capture(app.popoverWindow, to: "\(dir)/image-\(mode).png")
+                    // The same image zoomed in.
+                    ZoomScrollView.find(in: app.popoverWindow?.contentView)?.zoom(by: 3)
+                    try? await Task.sleep(for: .seconds(0.8))
+                    capture(app.popoverWindow, to: "\(dir)/image-zoom-\(mode).png")
                     app.model.viewer = nil
+                    // Let the viewer go, so the next one opens fitted.
+                    try? await Task.sleep(for: .seconds(1))
                 }
                 if only == nil || only?.contains("settings") == true {
                     app.showSettings(nil)

@@ -39,6 +39,8 @@ Cài đặt) và ghi "từ T4" để biết nó bị dời.
 | Sửa nội dung | bấm vào chữ | Return để xong |
 | Dán ảnh | vào khối đang sửa, hoặc chờ dưới ô nhập tới khi Return; menu chuột phải > Dán ảnh | ⌘V |
 | Xem ảnh lớn | bấm vào thumbnail; phủ kín popover | Esc đóng, ← → chuyển ảnh |
+| Phóng to / thu nhỏ ảnh | pinch trên trackpad, nhấp đúp vào ảnh, nút − % + dưới ảnh | ⌘= ⌘- ⌘0 (vừa khung) |
+| Kéo ảnh khi đã phóng to | kéo bằng chuột, hoặc cuộn hai ngón | — |
 | Sao chép / xoá ảnh / mở bằng Xem trước | menu chuột phải trên ảnh, thanh trên trình xem ảnh | — |
 | Đổi loại / dời ngày / xoá | menu chuột phải | — |
 | Sắp xếp lại | kéo thả | — |
