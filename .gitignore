@@ -9,3 +9,7 @@ xcuserdata/
 
 # Agent skills used to build the app (local only)
 .agents/
+skills-lock.json
+
+# Built by build.sh from Icon/AppIcon.iconset
+/Resources/
