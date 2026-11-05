@@ -423,7 +423,7 @@ private struct ImageStrip: View {
 }
 
 /// One image, large, over the whole popover. Esc closes it, arrows page
-/// through the block's other images. Pinch, double click, or ⌘= ⌘- ⌘0 zoom;
+/// through the block's other images. Pinch, ⌃ + scroll, double click, or ⌘= ⌘- ⌘0 zoom;
 /// zoomed in, drag or scroll to move around.
 private struct ImageViewerView: View {
     @Environment(AppModel.self) private var model
@@ -533,7 +533,7 @@ private struct ZoomBar: View {
             Button("Phóng to", systemImage: "plus.magnifyingglass") { control.zoomIn() }
                 .keyboardShortcut("=", modifiers: .command)
                 .disabled(!control.canZoomIn)
-                .help("Phóng to (⌘=), hoặc nhấp đúp vào ảnh")
+                .help("Phóng to (⌘=), hoặc ⌃ + lăn chuột, hoặc nhấp đúp vào ảnh")
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)

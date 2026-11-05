@@ -104,7 +104,12 @@ enum SelfTest {
             }
             check("the popover opens and closes 10 times", app.popover.isShown)
 
-            // The image viewer zooms and pans.
+            // The image viewer zooms and pans. The close from the loop above
+            // lands late, and a transient popover closes when another app
+            // takes focus: settle, then keep it open for these checks.
+            try? await Task.sleep(for: .seconds(0.5))
+            app.popover.behavior = .applicationDefined
+            if !app.popover.isShown { app.showPopover() }
             board.clearContents()
             board.setData(SampleImage.png(), forType: .png)
             _ = model.pasteImages(from: board)
@@ -120,6 +125,23 @@ enum SelfTest {
             let before = zoomView?.contentView.bounds.origin
             zoomView?.pan(by: CGSize(width: 40, height: 0))
             check("dragging moves the image", zoomView?.contentView.bounds.origin != before)
+            if let zoomView, let window = zoomView.window {
+                let start = zoomView.magnification
+                let center = window.convertPoint(toScreen: zoomView.convert(NSPoint(x: zoomView.bounds.midX, y: zoomView.bounds.midY), to: nil))
+                @MainActor func controlScroll(_ lines: Int32) {
+                    guard let cg = CGEvent(scrollWheelEvent2Source: nil, units: .line, wheelCount: 1, wheel1: lines, wheel2: 0, wheel3: 0) else { return }
+                    cg.flags = .maskControl
+                    cg.location = CGPoint(x: center.x, y: (NSScreen.screens.first?.frame.height ?? 0) - center.y)
+                    if let event = NSEvent(cgEvent: cg) { zoomView.scrollWheel(with: event) }
+                }
+                controlScroll(3)
+                let zoomedIn = zoomView.magnification
+                controlScroll(-3)
+                check("⌃ + scroll zooms in and out", zoomedIn > start && zoomView.magnification < zoomedIn,
+                      "\(start) → \(zoomedIn) → \(zoomView.magnification)")
+            } else {
+                check("⌃ + scroll zooms in and out", false, "the viewer is not on screen")
+            }
             zoomView?.fit()
             try? await Task.sleep(for: .seconds(0.5))
             check("⌘0 fits it back", zoomView?.isFitted == true && zoomView?.canPan == false)
@@ -132,6 +154,7 @@ enum SelfTest {
             check("the image opens fitted again after closing zoomed", reopened !== zoomView && reopened?.isFitted == true,
                   "same view: \(reopened === zoomView), magnification \(reopened?.magnification ?? 0)")
             model.viewer = nil
+            app.popover.behavior = .transient
             model.delete(zoomed.id)
             model.undo = nil
             app.closePopover()

@@ -147,6 +147,34 @@ final class ZoomScrollView: NSScrollView {
         report()
     }
 
+    /// ⌃ + scroll zooms around the pointer; a plain scroll moves the image.
+    override func scrollWheel(with event: NSEvent) {
+        guard event.modifierFlags.contains(.control) else {
+            super.scrollWheel(with: event)
+            return
+        }
+        // Wheel up (or two fingers up on a trackpad) zooms in, whatever
+        // the natural scrolling setting.
+        let delta = event.isDirectionInvertedFromDevice ? -event.scrollingDeltaY : event.scrollingDeltaY
+        guard delta != 0 else { return }
+        let speed: CGFloat = event.hasPreciseScrollingDeltas ? 0.01 : 0.12
+        zoom(to: magnification * exp(delta * speed), keeping: contentView.convert(event.locationInWindow, from: nil))
+    }
+
+    /// Zooms without animation, keeping `point` (clip view coordinates)
+    /// under the pointer.
+    private func zoom(to target: CGFloat, keeping point: NSPoint) {
+        let old = contentView.bounds
+        let fraction = CGPoint(x: (point.x - old.minX) / old.width, y: (point.y - old.minY) / old.height)
+        magnification = min(max(target, minMagnification), maxMagnification)
+        var bounds = contentView.bounds
+        bounds.origin = CGPoint(x: point.x - fraction.x * bounds.width, y: point.y - fraction.y * bounds.height)
+        contentView.scroll(to: contentView.constrainBoundsRect(bounds).origin)
+        reflectScrolledClipView(contentView)
+        fitted = abs(magnification - fitMagnification) < 0.001
+        report()
+    }
+
     // MARK: Dragging
 
     /// Moves the image with the pointer, by `delta` window points.
