@@ -33,7 +33,8 @@ cp "$bin" "$app/Contents/MacOS/$name"
 sed -e "s/__BUILD__/$(date +%Y%m%d%H%M)/" "$here/Info.plist.in" > "$app/Contents/Info.plist"
 [[ -f "$here/Resources/AppIcon.icns" ]] || "$here/tools/make_icon.sh"
 cp -X "$here/Resources/AppIcon.icns" "$app/Contents/Resources/"
-cp -X "$here/Brand/$name-wordmark-light.svg" "$here/Brand/$name-wordmark-dark.svg" "$app/Contents/Resources/"
+# The logo and name at the top of the popover, as build.sh copies them.
+cp -X "$here/Brand/$name-lockup-light.svg" "$here/Brand/$name-lockup-dark.svg" "$app/Contents/Resources/"
 xattr -cr "$app"
 
 identity=$(security find-identity -v -p codesigning 2>/dev/null | grep -m1 -o '"Developer ID Application: [^"]*"' | tr -d '"' || true)
