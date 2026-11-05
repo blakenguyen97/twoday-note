@@ -11,6 +11,7 @@ import TwodayNoteKit
 //   TwodayNote --selftest           run the self-test on a /tmp store and quit with 0 or 1 (tools/selftest.sh)
 //   APP_ACCENT=<id> TwodayNote      run with another accent from Theme.all (UI/Theme.swift)
 //   APP_GRID=1 TwodayNote           draw the 8 pt grid and the layout probes over the popover
+//   APP_GUIDE=1 TwodayNote          open the guide at launch, as on first launch (with APP_STORE too)
 
 @main
 enum TwodayNoteMain {
@@ -72,6 +73,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(prefsChanged),
                                                name: UserDefaults.didChangeNotification, object: nil)
 
+        // First launch: the popover opens with the guide. Not for tests and snapshots.
+        if !Prefs.guideSeen && !Store.isOverridden || ProcessInfo.processInfo.environment["APP_GUIDE"] == "1" {
+            // After the menu bar has placed the icon, so the popover points at it.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { self.showGuide(nil) }
+        }
+
         SeedData.insertIfRequested(into: model)
         SelfTest.runIfRequested(model: model)
         Snapshot.runIfRequested(app: self)
@@ -98,6 +105,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         model.focusTick += 1
     }
 
+    /// ••• > Hướng dẫn sử dụng, and the first launch: the guide in the popover.
+    @objc func showGuide(_ sender: Any?) {
+        model.openGuide()
+        if !popover.isShown { showPopover() }
+    }
+
     func closePopover() {
         popover.performClose(nil)
     }
@@ -105,7 +118,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     /// ⌘V: an image on the clipboard goes into the popover's blocks; text
     /// pastes into the focused field as usual.
     @objc func pasteNote(_ sender: Any?) {
-        if NSApp.keyWindow === popoverWindow, model.viewer == nil, model.pasteImages() { return }
+        if NSApp.keyWindow === popoverWindow, model.viewer == nil, !model.showsGuide, model.pasteImages() { return }
         NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: sender)
     }
 

@@ -5,7 +5,8 @@ import SwiftUI
 /// Screenshot mode for agents.
 ///   APP_STORE=/tmp/TwodayNote-test.json APP_SNAPSHOT=/tmp/shots ~/Applications/TwodayNote.app/Contents/MacOS/TwodayNote
 /// opens the popover from the menu bar and writes day0-light.png, day0-dark.png
-/// … for each day, later-light.png (Xem sau), image-light.png (the image viewer), plus settings-light.png
+/// … for each day, later-light.png (Xem sau), image-light.png (the image viewer), guide0-light.png …
+/// (each page of the guide), plus settings-light.png
 /// and settings-dark.png, then quits.
 /// Each PNG gets a <name>-layout.json with the grid probes (tools/check-layout.swift).
 /// APP_SNAPSHOT_PAGES=day0,settings limits the pages.
@@ -66,6 +67,19 @@ enum Snapshot {
                     app.model.viewer = nil
                     // Let the viewer go, so the next one opens fitted.
                     try? await Task.sleep(for: .seconds(1))
+                }
+                if only == nil || only?.contains("guide") == true {
+                    // Each page of the guide, its demo still at its poster step.
+                    if !app.popover.isShown { app.showPopover() }
+                    app.model.dayOffset = 0
+                    app.model.openGuide()
+                    for page in GuidePage.allCases {
+                        app.model.guidePage = page.rawValue
+                        try? await Task.sleep(for: .seconds(0.8))
+                        capture(app.popoverWindow, to: "\(dir)/guide\(page.rawValue)-\(mode).png")
+                    }
+                    app.model.showsGuide = false
+                    try? await Task.sleep(for: .seconds(0.4))
                 }
                 if only == nil || only?.contains("settings") == true {
                     app.showSettings(nil)

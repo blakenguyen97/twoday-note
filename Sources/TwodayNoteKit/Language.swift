@@ -154,6 +154,58 @@ public enum Strings {
         "Đã xoá “{}”": "Deleted “{}”",
         "Đã xoá {} việc đã xong": "Cleared finished tasks: {}",
 
+        // Guide
+        "Hướng dẫn sử dụng": "User Guide",
+        "Đóng hướng dẫn": "Close Guide",
+        "Đóng hướng dẫn (Esc)": "Close the guide (Esc)",
+        "Trang trước": "Previous Page",
+        "Trang trước (←)": "Previous page (←)",
+        "Trang sau": "Next Page",
+        "Tiếp": "Next",
+        "Bắt đầu dùng": "Get Started",
+        "Trang {} trên {}": "Page {} of {}",
+        "Chào mừng đến TwodayNote": "Welcome to TwodayNote",
+        "Gõ, rồi nhấn Return": "Type, then press Return",
+        "Hôm nay, Ngày mai, Xem sau": "Today, Tomorrow, Later",
+        "Xong việc, hay để mai": "Done, or tomorrow",
+        "Chuột phải để làm thêm": "Right-click for more",
+        "Dán ảnh, lưu link": "Paste images, save links",
+        "Tập trung từng phiên": "Focus in sessions",
+        "Thế là xong!": "You’re all set!",
+        "Việc, ghi chú và ý tưởng cho hôm nay và ngày mai, ngay trên thanh menu. Bấm vào icon, hoặc nhấn ⌃⌥N ở bất kỳ app nào.":
+            "Tasks, notes, and ideas for today and tomorrow, right in the menu bar. Click the icon, or press ⌃⌥N in any app.",
+        "Mỗi dòng thành một khối, mặc định là task. Gõ # ở đầu dòng để có tiêu đề, - ghi chú, * ý tưởng.":
+            "Each line becomes a block, a task by default. Start a line with # for a heading, - for a note, * for an idea.",
+        "Ghi trước cho ngày mai, hoặc cất link, đoạn trích, ảnh chụp màn hình vào Xem sau để xem khi rảnh. Chuyển nhanh bằng ⌘1 ⌘2 ⌘3.":
+            "Plan tomorrow ahead, or keep links, quotes, and screenshots in Later for when you have time. Switch with ⌘1 ⌘2 ⌘3.",
+        "Tick khi xong. Task chưa xong của hôm trước tự sang hôm nay, có dấu quá hạn màu cam. Xoá không hỏi lại, vì luôn có Hoàn tác.":
+            "Tick a task when it’s done. Unfinished tasks from earlier days move to today with an orange overdue mark. Deleting never asks, because there’s always Undo.",
+        "Đổi loại, dời sang ngày khác hay Xem sau, dán ảnh, hoặc xoá. Kéo thả để sắp xếp lại.":
+            "Change the kind, move to another day or to Later, paste an image, or delete. Drag to reorder.",
+        "⌘V dán ảnh chụp màn hình vào khối đang sửa. Dán link GitHub hay YouTube vào Xem sau, nó tự vào nhóm của mình và hiện thành thẻ.":
+            "⌘V pastes a screenshot into the block you’re editing. Paste a GitHub or YouTube link into Later and it files itself under its heading, as a card.",
+        "Chọn 15, 25, 45 hay 60 phút rồi Bắt đầu. Thời gian còn lại chạy cạnh icon trên thanh menu, nên cứ đóng TwodayNote mà làm.":
+            "Pick 15, 25, 45, or 60 minutes and Start. The time left runs beside the menu bar icon, so you can close TwodayNote and get to work.",
+        "Mở lại hướng dẫn này trong ••• > Hướng dẫn sử dụng. Đổi màu nhấn, ngôn ngữ và phím tắt trong Cài đặt (⌘,).":
+            "Open this guide again from ••• > User Guide. Change the accent color, language, and shortcut in Settings (⌘,).",
+        // Guide sample blocks
+        "Gửi bản thiết kế": "Send the design",
+        "Quà sinh nhật mẹ": "Mom’s birthday gift",
+        "# Dự án mới": "# New project",
+        "- Họp lúc 3 giờ chiều": "- Meeting at 3 pm",
+        "* Thêm chế độ tối": "* Add a dark mode",
+        "Gọi cho Lan": "Call Lan",
+        "Đặt vé xe về quê": "Book the bus home",
+        "Bài viết về thiết kế": "An article on design",
+        "Trả lời email của Minh": "Reply to Minh’s email",
+        "Phòng họp tầng 3": "Meeting room, 3rd floor",
+        "Mua sữa": "Buy milk",
+        "Mua quà sinh nhật": "Buy a birthday gift",
+        "Ứng dụng đọc sách": "A reading app",
+        "Ghi chú họp sáng": "Morning meeting notes",
+        "Màn hình chính mới": "New home screen",
+        "Ngôn ngữ lập trình Swift": "The Swift Programming Language",
+
         // Menu bar and menus
         "TwodayNote, còn {} việc": "TwodayNote, {} to do",
         "Sửa": "Edit",

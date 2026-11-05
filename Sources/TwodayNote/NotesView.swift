@@ -38,8 +38,21 @@ struct NotesView: View {
             }
         }
         .animation(.snappy, value: model.viewer)
+        .overlay {
+            if model.showsGuide {
+                GuideView()
+                    .transition(.opacity)
+            }
+        }
+        .animation(Motion.change, value: model.showsGuide)
         .onExitCommand {
-            if model.viewer != nil { model.viewer = nil } else { AppDelegate.shared.closePopover() }
+            if model.showsGuide {
+                model.closeGuide()
+            } else if model.viewer != nil {
+                model.viewer = nil
+            } else {
+                AppDelegate.shared.closePopover()
+            }
         }
         .gridArea("popover", inset: Space.lg)
     }
@@ -121,6 +134,7 @@ private struct MoreMenu: View {
             Button(L("Xoá việc đã xong"), systemImage: "checkmark.circle.badge.xmark") { model.clearDone() }
                 .disabled(!hasDone)
             Divider()
+            Button(L("Hướng dẫn sử dụng"), systemImage: "questionmark.circle") { model.openGuide() }
             Button(L("Cài đặt…")) { AppDelegate.shared.showSettings(nil) }
             Button(L("Thoát TwodayNote")) { NSApp.terminate(nil) }
         } label: {
@@ -194,9 +208,10 @@ private struct AddField: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(focused ? AnyShapeStyle(Palette.accent.opacity(0.6)) : AnyShapeStyle(.separator), lineWidth: 1)
         }
-        .onChange(of: model.focusTick) { focused = true }
+        // Not under the guide: its arrow keys would move the cursor instead.
+        .onChange(of: model.focusTick) { if !model.showsGuide { focused = true } }
         .onChange(of: focused) { _, now in if now { model.editingID = nil } }
-        .onAppear { focused = true }
+        .onAppear { if !model.showsGuide { focused = true } }
     }
 }
 
@@ -756,6 +771,7 @@ private struct DayShortcuts: View {
             ForEach(0...AppModel.laterTab, id: \.self) { offset in
                 Button(model.label(offset: offset)) { model.dayOffset = offset }
                     .keyboardShortcut(KeyEquivalent(Character("\(offset + 1)")), modifiers: .command)
+                    .disabled(model.showsGuide)
             }
         }
         .opacity(0)

@@ -26,6 +26,11 @@ final class AppModel {
     var pendingImages: [String] = []
     /// The image shown large over the popover.
     var viewer: ImageViewer?
+    /// The walkthrough over the popover (GuideView): on first launch, and
+    /// from ••• > Hướng dẫn sử dụng.
+    var showsGuide = false
+    /// The guide's page. Optional for ScrollView's scroll position.
+    var guidePage: Int? = 0
     private(set) var today = Day.start(of: .now)
 
     /// The Focus countdown at the bottom of the popover.
@@ -65,6 +70,23 @@ final class AppModel {
         offset == Self.laterTab ? L("Xem sau") : Day.label(offset: offset, today: today)
     }
     var todayCounts: (remaining: Int, done: Int) { book.counts(on: today) }
+
+    // MARK: Guide
+
+    /// Opens the walkthrough at its first page.
+    func openGuide() {
+        viewer = nil
+        guidePage = 0
+        showsGuide = true
+    }
+
+    /// Closes it for good: it no longer opens by itself at launch.
+    func closeGuide() {
+        showsGuide = false
+        // Tests and snapshots leave the real setting alone.
+        if !Store.isOverridden { UserDefaults.standard.set(true, forKey: Prefs.guideSeenKey) }
+        focusTick += 1
+    }
 
     // MARK: Changes
 
@@ -286,10 +308,13 @@ enum Prefs {
     static let showCountKey = "showCountInMenuBar"
     static let hotKeyKey = "globalHotKey"
     static let appearanceKey = "appearance.mode"
+    /// Set once the guide was finished or closed, so it opens by itself only once.
+    static let guideSeenKey = "guide.seen"
 
     static var carryOver: Bool { UserDefaults.standard.object(forKey: carryOverKey) as? Bool ?? true }
     static var showCount: Bool { UserDefaults.standard.object(forKey: showCountKey) as? Bool ?? true }
     static var hotKey: Bool { UserDefaults.standard.object(forKey: hotKeyKey) as? Bool ?? true }
+    static var guideSeen: Bool { UserDefaults.standard.bool(forKey: guideSeenKey) }
     static var focusMinutes: Int { UserDefaults.standard.object(forKey: focusMinutesKey) as? Int ?? 25 }
     static var appearance: AppearanceMode {
         UserDefaults.standard.string(forKey: appearanceKey).flatMap(AppearanceMode.init) ?? .system

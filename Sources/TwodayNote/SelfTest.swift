@@ -249,6 +249,26 @@ enum SelfTest {
                   && ZoomScrollView.find(in: app.popoverWindow?.contentView)?.isFitted == true,
                   "showing \(model.viewer.map { pages.firstIndex(of: $0.name) ?? -1 } ?? -1)")
             model.viewer = nil
+
+            // The guide: ••• > Hướng dẫn sử dụng, paged with ← →, closed with Đóng.
+            model.guidePage = 5
+            app.showGuide(nil)
+            try? await Task.sleep(for: .seconds(0.6))
+            check("Hướng dẫn sử dụng opens the guide at its first page", model.showsGuide && model.guidePage == 0)
+            // The pages lay out before the arrow keys reach them.
+            try? await Task.sleep(for: .seconds(1))
+            arrow(NSRightArrowFunctionKey)
+            try? await Task.sleep(for: .seconds(0.6))
+            arrow(NSRightArrowFunctionKey)
+            try? await Task.sleep(for: .seconds(0.6))
+            arrow(NSLeftArrowFunctionKey)
+            try? await Task.sleep(for: .seconds(0.6))
+            check("→ and ← page through the guide", model.guidePage == 1, "page \(model.guidePage ?? -1)")
+            model.closeGuide()
+            check("closing the guide shows the notes again", !model.showsGuide)
+            check("tests leave the guide's first-launch setting alone", UserDefaults.standard.object(forKey: Prefs.guideSeenKey) == nil
+                  || Prefs.guideSeen)
+
             app.popover.behavior = .transient
             model.delete(zoomed.id)
             model.undo = nil

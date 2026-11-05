@@ -67,8 +67,20 @@ gom nhóm.
 | Xoá việc đã xong | menu ••• | — |
 | Hoàn tác xoá | thông báo nhỏ trên thanh Focus | — |
 | Tập trung (Pomodoro) | thanh Focus dưới đáy: chọn 15/25/45/60 phút, Bắt đầu, Tạm dừng, Tiếp tục, Dừng | — |
+| Hướng dẫn sử dụng | menu •••; tự mở lần đầu | ← → lật trang, Return tiếp, Esc đóng |
 | Cài đặt | menu ••• | ⌘, |
 | Thoát | menu ••• | ⌘Q |
+
+## Hướng dẫn sử dụng
+
+Lần đầu mở app, popover tự mở với phần hướng dẫn phủ lên trên: 8 trang trượt
+ngang (vuốt trackpad, ← →, hoặc nút Tiếp), chấm trang ở dưới, nút đóng ở trên.
+Mỗi trang có một demo nhỏ chạy lặp, dựng bằng chính các control của app,
+không dùng ảnh tĩnh: ô nhập tự gõ và Return thành khối, Picker tự chuyển ngày,
+checkbox tự tick, menu chuột phải mở ra, đồng hồ Focus đếm ngược cạnh icon.
+Demo chỉ chạy khi trang đang hiện; Reduce Motion và snapshot thấy một khung
+đứng yên. Đóng hay bấm "Bắt đầu dùng" ở trang cuối thì không tự mở lại nữa
+(`guide.seen`); mở lại bằng ••• > Hướng dẫn sử dụng.
 
 ## Ngôn ngữ và giao diện
 
