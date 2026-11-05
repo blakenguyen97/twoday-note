@@ -604,17 +604,28 @@ private struct FocusBar: View {
         switch model.focus.phase {
         case .idle:
             Text("Tập trung")
-            Menu("\(minutes) phút") {
+            Menu {
                 Picker("Thời lượng", selection: $minutes) {
                     ForEach(FocusClock.choices, id: \.self) { Text("\($0) phút").tag($0) }
                 }
                 .pickerStyle(.inline)
+            } label: {
+                HStack(spacing: Space.xs) {
+                    Text("\(minutes) phút")
+                        .foregroundStyle(.primary)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .contentShape(.rect)
             }
             .menuStyle(.button)
-            .buttonStyle(.borderless)
+            // Plain draws the label as is; borderless repaints it gray.
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
             .fixedSize()
-            .foregroundStyle(.secondary)
             .help("Thời lượng một phiên tập trung")
+            .accessibilityLabel("Thời lượng: \(minutes) phút")
         case .running, .paused:
             Text(FocusClock.format(model.focus.remaining(now: now) ?? 0))
                 .font(.title3.monospacedDigit().weight(.semibold))
