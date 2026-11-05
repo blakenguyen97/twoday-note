@@ -1,6 +1,6 @@
 # TwodayNote — Design plan
 
-Ghi chú nhanh task, ý tưởng, ghi chú cho hôm nay và 1–2 ngày tới, sống trên
+Ghi chú nhanh task, ý tưởng, ghi chú cho hôm nay và ngày mai, sống trên
 thanh menu macOS.
 
 ## Archetype
@@ -11,7 +11,7 @@ nơi duy nhất để gõ, nên ô nhập được focus ngay khi mở.
 
 ## Information architecture
 
-Một trang, ba ngày: **Hôm nay · Ngày mai · Thứ X** (ngày kia) chọn bằng
+Một trang, hai ngày: **Hôm nay · Ngày mai**, và **Xem sau**, chọn bằng
 segmented control. Mỗi ngày là một danh sách khối (block):
 
 | Loại | Hiển thị | Gõ nhanh |
@@ -29,7 +29,7 @@ Cài đặt) và ghi "từ T4" để biết nó bị dời.
 
 ## Xem sau
 
-Tab thứ tư, sau ba ngày: chỗ để những thứ không quan trọng, vô tình gặp
+Tab thứ ba, sau hai ngày: chỗ để những thứ không quan trọng, vô tình gặp
 (link, đoạn trích, ảnh chụp màn hình) và muốn xem lại khi rảnh. Không thuộc
 ngày nào, không có hạn, không bao giờ tự chuyển sang hôm nay. Khối mới ở đây
 mặc định là Ghi chú (ngày vẫn mặc định Task), và ghi ngày lưu ("5/11") ở bên
@@ -42,8 +42,8 @@ phải. Dời qua lại bằng menu chuột phải > Dời sang.
 | Mở / đóng TwodayNote | icon thanh menu | ⌃⌥N (toàn cục) |
 | Thêm khối | ô nhập | Return |
 | Đổi loại khối mới | menu cạnh ô nhập | gõ tiền tố |
-| Chọn ngày | segmented control | ⌘1 ⌘2 ⌘3 |
-| Mở Xem sau | tab cuối của segmented control | ⌘4 |
+| Chọn ngày | segmented control | ⌘1 ⌘2 |
+| Mở Xem sau | tab cuối của segmented control | ⌘3 |
 | Đánh dấu xong | checkbox | — |
 | Sửa nội dung | bấm vào chữ | Return để xong |
 | Dán ảnh | vào khối đang sửa, hoặc chờ dưới ô nhập tới khi Return; menu chuột phải > Dán ảnh | ⌘V |
@@ -75,7 +75,7 @@ khi không còn khối, ảnh chờ, hay Hoàn tác nào dùng tới.
 ## Empty states
 
 - Hôm nay trống: "Hôm nay chưa có gì" + gợi ý gõ ở ô phía trên.
-- Ngày mai / ngày kia trống: "Ngày mai còn trống" + cùng gợi ý.
+- Ngày mai trống: "Ngày mai còn trống" + cùng gợi ý.
 - Xem sau trống: "Chưa có gì để xem sau" + nó dùng để làm gì.
 
 ## Feeling

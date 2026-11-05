@@ -1,7 +1,7 @@
 # TwodayNote
 
-A menu bar app for quick tasks, notes, and ideas for today and the next two
-days. SwiftUI in an AppKit shell: `NSStatusItem` + `NSPopover`, no Dock icon
+A menu bar app for quick tasks, notes, and ideas for today and tomorrow,
+plus a Xem sau list of things to look at later. SwiftUI in an AppKit shell: `NSStatusItem` + `NSPopover`, no Dock icon
 (`LSUIElement`), no main window. Data is one JSON file, no server.
 Design plan: `docs/DESIGN.md`. UI text is Vietnamese.
 
@@ -31,7 +31,7 @@ Design plan: `docs/DESIGN.md`. UI text is Vietnamese.
 - Unit tests: `tools/test.sh`.
 - Self-test (the app's real functions on a /tmp store): `tools/selftest.sh`. Exit 0 when every check passes. Add a check for every story with logic in `SelfTest.swift`.
 - After every UI change, take snapshots with sample data and look at them: `tools/snap.sh`.
-  It opens the popover from the menu bar and writes `/tmp/TwodayNote-shots/day0-light.png` … `day2-dark.png` and `settings-light.png`/`-dark.png`, then quits. `APP_SNAPSHOT_PAGES=day0,settings tools/snap.sh` limits the pages.
+  It opens the popover from the menu bar and writes `/tmp/TwodayNote-shots/day0-light.png` … `day1-dark.png`, `later-light.png`/`-dark.png`, and `settings-light.png`/`-dark.png`, then quits. `APP_SNAPSHOT_PAGES=day0,settings tools/snap.sh` limits the pages.
   The run takes keyboard focus: anything typed meanwhile lands in the popover.
 - Snapshots, seed data, and the self-test refuse to run without `APP_STORE` in /tmp.
 - Never test against the real notes in `~/Library/Application Support/TwodayNote/`.

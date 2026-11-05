@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  A tiny macOS menu bar app for jotting down tasks, notes, and ideas for today and the next two days, with a Pomodoro focus timer.
+  A tiny macOS menu bar app for jotting down tasks, notes, and ideas for today and tomorrow, plus a list of things to look at later, with a Pomodoro focus timer.
 </p>
 
 <p align="center">
@@ -16,7 +16,8 @@
 ## Features
 
 - **Lives in the menu bar.** No Dock icon, no window to manage. Click the icon or press **⌃⌥N** from any app.
-- **Today, tomorrow, and the day after.** Three tabs, switch with **⌘1 ⌘2 ⌘3**.
+- **Today and tomorrow.** Two tabs, switch with **⌘1 ⌘2**.
+- **Xem sau (look at later).** A third tab, **⌘3**, for things you came across and want to see later: links, snippets, screenshots. No day, no deadline, never carried over to today.
 - **Four kinds of blocks.** Type a prefix at the start of a line:
 
   | Prefix | Block |

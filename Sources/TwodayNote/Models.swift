@@ -7,7 +7,7 @@ import TwodayNoteKit
 @Observable
 final class AppModel {
     private(set) var book: Notebook
-    /// 0 today, 1 tomorrow, 2 the day after, `laterTab` the Xem sau list.
+    /// 0 today, 1 tomorrow, `laterTab` the Xem sau list.
     var dayOffset = 0
     /// The kind a new block on a day gets when it has no prefix.
     var dayKind: EntryKind = .task
@@ -39,7 +39,7 @@ final class AppModel {
     @ObservationIgnored var onFocusChange: (() -> Void)?
     @ObservationIgnored private var saveTask: Task<Void, Never>?
 
-    static let dayCount = 3
+    static let dayCount = 2
     /// The tab after the days: things kept for later, on no day.
     static let laterTab = dayCount
 

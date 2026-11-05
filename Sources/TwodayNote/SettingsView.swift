@@ -71,7 +71,7 @@ private struct ShortcutList: View {
     var body: some View {
         Section("Phím tắt và gõ nhanh") {
             row("Mở / đóng TwodayNote", "⌃⌥N")
-            row("Hôm nay · Ngày mai · Ngày kia", "⌘1 ⌘2 ⌘3")
+            row("Hôm nay · Ngày mai · Xem sau", "⌘1 ⌘2 ⌘3")
             row("Thêm khối", "Return")
             row("Đóng", "Esc")
             LabeledContent("Gõ ở đầu dòng") {

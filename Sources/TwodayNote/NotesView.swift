@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import TwodayNoteKit
 
-/// The popover: a date header, three day tabs and Xem sau, the add field,
+/// The popover: a date header, two day tabs and Xem sau, the add field,
 /// the tab's blocks, and the Focus timer at the bottom. A quick-capture panel, so the
 /// add field takes focus.
 struct NotesView: View {
@@ -687,7 +687,7 @@ private struct UndoBar: View {
     }
 }
 
-/// ⌘1, ⌘2, ⌘3 pick the day, ⌘4 Xem sau. Invisible buttons, so the shortcuts work while
+/// ⌘1, ⌘2 pick the day, ⌘3 Xem sau. Invisible buttons, so the shortcuts work while
 /// the popover is key.
 private struct DayShortcuts: View {
     @Environment(AppModel.self) private var model
