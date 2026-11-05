@@ -57,6 +57,32 @@ enum SelfTest {
             model.refreshDay()
             check("unfinished tasks from yesterday carry over", model.visible.first?.text == "Việc hôm qua")
 
+            // Xem sau.
+            model.dayOffset = AppModel.laterTab
+            check("Xem sau starts empty, with notes as the new kind", model.visible.isEmpty && model.newKind == .note)
+            check("Return adds a note to Xem sau", model.add("Link bài viết hay") && model.visible.first?.kind == .note)
+            let saved = model.visible[0]
+            model.dayOffset = 0
+            check("Xem sau keeps the day's kind apart", model.newKind == .task)
+            check("a Xem sau block is on no day", !model.visible.contains { $0.id == saved.id })
+            _ = model.add("Việc để sau")
+            let later = model.visible.last!
+            model.moveToLater(later.id)
+            check("Dời sang > Xem sau takes a block off today", !model.visible.contains { $0.id == later.id })
+            model.dayOffset = AppModel.laterTab
+            check("…and puts it at the end of Xem sau", model.visible.map(\.id) == [saved.id, later.id])
+            var later2 = model.book
+            later2.rollOver(today: Day.adding(2, to: model.today))
+            check("a task on Xem sau never carries over", later2.laterEntries.count == 2)
+            model.move(later.id, toOffset: 0)
+            model.dayOffset = 0
+            check("Dời sang > Hôm nay brings it back", model.visible.contains { $0.id == later.id })
+            model.delete(later.id)
+            model.dayOffset = AppModel.laterTab
+            model.delete(saved.id)
+            model.undo = nil
+            model.dayOffset = 0
+
             // Pasted images.
             let board = NSPasteboard(name: .init("TwodayNote-selftest"))
             board.clearContents()

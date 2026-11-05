@@ -40,6 +40,7 @@ func labels() {
     #expect(Day.label(offset: 3, today: thursday, calendar: calendar) == "Chủ Nhật")
     #expect(Day.long(thursday, calendar: calendar) == "Thứ Năm, 5 tháng 11")
     #expect(Day.shortWeekday(thursday, calendar: calendar) == "T5")
+    #expect(Day.short(thursday, calendar: calendar) == "5/11")
 }
 
 @Test("Only unfinished tasks from earlier days carry over")
@@ -58,6 +59,7 @@ func summary() {
     #expect(Progress.summary(remaining: 3, done: 0) == "Còn 3 việc")
     #expect(Progress.summary(remaining: 0, done: 2) == "Xong hết 2 việc")
     #expect(Progress.summary(remaining: 3, done: 2) == "Còn 3 việc · xong 2")
+    #expect(Progress.later(count: 2) == "2 mục để xem khi rảnh")
 }
 
 @Suite("Notebook")
@@ -176,6 +178,49 @@ struct NotebookTests {
         // A task without images gives nothing to undo.
         let plain = book.add("Gọi Lan", defaultKind: .task, day: today)!
         #expect(book.toggleDone(plain.id) == nil)
+    }
+
+    @Test func keepsLaterBlocksOffEveryDay() {
+        var book = Notebook()
+        let yesterday = Day.adding(-1, to: today)
+        let link = book.add("- Bài viết về SwiftUI layout", defaultKind: .note, day: today, later: true)!
+        let task = book.add("Đọc thử thư viện mới", defaultKind: .task, day: yesterday, later: true)!
+        #expect(book.entries(on: today).isEmpty)
+        #expect(book.counts(on: yesterday) == (0, 0))
+        #expect(book.laterEntries.map(\.id) == [link.id, task.id])
+        // A task on Xem sau has no day to be late for.
+        #expect(book.rollOver(today: today) == 0)
+        #expect(book.laterEntries.count == 2)
+        book.reorderLater(from: [1], to: 0)
+        #expect(book.laterEntries.map(\.id) == [task.id, link.id])
+    }
+
+    @Test func movesBetweenADayAndLater() {
+        var book = Notebook()
+        let tomorrow = Day.adding(1, to: today)
+        let old = book.add("Gọi Lan", defaultKind: .task, day: Day.adding(-1, to: today))!
+        book.rollOver(today: today)
+        let saved = book.add("- Link hay", defaultKind: .note, day: today, later: true)!
+        book.moveToLater(old.id)
+        #expect(book.entries(on: today).isEmpty)
+        #expect(book.laterEntries.map(\.id) == [saved.id, old.id])
+        #expect(book.laterEntries.last?.carriedFrom == nil)
+        book.move(saved.id, to: today)
+        book.move(old.id, to: tomorrow)
+        #expect(book.laterEntries.isEmpty)
+        #expect(book.entries(on: today).map(\.id) == [saved.id])
+        #expect(book.entries(on: tomorrow).map(\.id) == [old.id])
+    }
+
+    @Test func laterSurvivesJSON() throws {
+        var book = Notebook()
+        book.add("Gọi Lan", defaultKind: .task, day: today)
+        book.add("- Link", defaultKind: .note, day: today, later: true)
+        let data = try JSONEncoder().encode(book)
+        #expect(String(decoding: data, as: UTF8.self).components(separatedBy: "later").count == 2)
+        let back = try JSONDecoder().decode(Notebook.self, from: data)
+        #expect(back.entries == book.entries)
+        #expect(back.laterEntries.count == 1)
     }
 
     @Test func detachesOneImage() {

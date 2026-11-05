@@ -29,6 +29,12 @@ enum SeedData {
         book.add("Chuẩn bị demo sprint lúc 10h", defaultKind: .task, day: tomorrow)
         book.add("Đặt vé xe về quê cuối tuần", defaultKind: .task, day: tomorrow)
         book.add("- Mang sạc laptop dự phòng", defaultKind: .task, day: tomorrow)
+
+        // Xem sau: things met by chance, saved over the last days.
+        book.add("Bài viết về cách Notes trên Mac sắp xếp ghi chú, đọc khi rảnh", defaultKind: .note, day: Day.adding(-3, to: today), later: true)
+        book.add("* Quán cà phê mới ở Hai Bà Trưng, cuối tuần ghé thử", defaultKind: .note, day: Day.adding(-1, to: today), later: true)
+        let shot = ImageStore.save(SampleImage.png(hue: 0.35), ext: "png").map { [$0] } ?? []
+        book.add("Ảnh chụp bảng giá gói cloud, so sánh sau", defaultKind: .note, day: today, images: shot, later: true)
         model.replace(book)
         model.refreshDay()
     }

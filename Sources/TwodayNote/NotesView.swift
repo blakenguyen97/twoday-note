@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 import TwodayNoteKit
 
-/// The popover: a date header, three day tabs, the add field, the day's
-/// blocks, and the Focus timer at the bottom. A quick-capture panel, so the
+/// The popover: a date header, three day tabs and Xem sau, the add field,
+/// the tab's blocks, and the Focus timer at the bottom. A quick-capture panel, so the
 /// add field takes focus.
 struct NotesView: View {
     @Environment(AppModel.self) private var model
@@ -57,20 +57,21 @@ private struct DayHeader: View {
             HStack(alignment: .center) {
                 Lockup()
                 Spacer()
-                MoreMenu(hasDone: counts.done > 0)
+                MoreMenu(hasDone: model.visible.contains(where: \.isDone))
             }
             // The brand stands apart from the day below it.
             .padding(.bottom, Space.xs)
             VStack(alignment: .leading, spacing: Space.xs) {
-                Text(Day.long(model.selectedDay))
+                Text(model.isLater ? "Xem sau" : Day.long(model.selectedDay))
                     .font(.title3.weight(.semibold))
-                Text(Progress.summary(remaining: counts.remaining, done: counts.done))
+                Text(model.isLater ? Progress.later(count: model.visible.count)
+                                   : Progress.summary(remaining: counts.remaining, done: counts.done))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
             }
             Picker("Ngày", selection: $model.dayOffset) {
-                ForEach(0..<AppModel.dayCount, id: \.self) { offset in
+                ForEach(0...AppModel.laterTab, id: \.self) { offset in
                     Text(model.label(offset: offset)).tag(offset)
                 }
             }
@@ -220,7 +221,13 @@ private struct EntryList: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .overlay {
-            if entries.isEmpty {
+            if entries.isEmpty, model.isLater {
+                ContentUnavailableView {
+                    Label("Chưa có gì để xem sau", systemImage: "tray")
+                } description: {
+                    Text("Link, đoạn trích, ảnh chụp màn hình vô tình gặp.\nKhông có hạn, không tự dời sang hôm nay.")
+                }
+            } else if entries.isEmpty {
                 ContentUnavailableView {
                     Label(model.dayOffset == 0 ? "Hôm nay chưa có gì" : "\(model.label(offset: model.dayOffset)) còn trống",
                           systemImage: model.dayOffset == 0 ? "sun.max" : "calendar")
@@ -260,6 +267,12 @@ private struct EntryRow: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .help("Chưa xong từ \(Day.long(from)), tự chuyển sang hôm nay")
+            }
+            if entry.isLater {
+                Text(Day.short(entry.createdAt))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .help("Lưu ngày \(Day.long(entry.createdAt))")
             }
         }
         .padding(.horizontal, entry.kind == .heading ? Space.xs : Space.md)
@@ -356,8 +369,12 @@ private struct EntryMenu: View {
             }
         }
         Menu("Dời sang") {
-            ForEach((0..<AppModel.dayCount).filter { Day.adding($0, to: model.today) != entry.day }, id: \.self) { offset in
+            ForEach((0..<AppModel.dayCount).filter { entry.isLater || Day.adding($0, to: model.today) != entry.day }, id: \.self) { offset in
                 Button(model.label(offset: offset)) { model.move(entry.id, toOffset: offset) }
+            }
+            if !entry.isLater {
+                Divider()
+                Button("Xem sau", systemImage: "tray") { model.moveToLater(entry.id) }
             }
         }
         Divider()
@@ -670,14 +687,14 @@ private struct UndoBar: View {
     }
 }
 
-/// ⌘1, ⌘2, ⌘3 pick the day. Invisible buttons, so the shortcuts work while
+/// ⌘1, ⌘2, ⌘3 pick the day, ⌘4 Xem sau. Invisible buttons, so the shortcuts work while
 /// the popover is key.
 private struct DayShortcuts: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         HStack {
-            ForEach(0..<AppModel.dayCount, id: \.self) { offset in
+            ForEach(0...AppModel.laterTab, id: \.self) { offset in
                 Button(model.label(offset: offset)) { model.dayOffset = offset }
                     .keyboardShortcut(KeyEquivalent(Character("\(offset + 1)")), modifiers: .command)
             }

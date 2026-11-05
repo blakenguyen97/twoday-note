@@ -1,6 +1,7 @@
 import Foundation
 
-/// One block on one day: a task, a note, an idea, or a heading.
+/// One block on one day, or on the Xem sau list: a task, a note, an idea,
+/// or a heading.
 public struct Entry: Codable, Identifiable, Hashable, Sendable {
     public var id: UUID
     public var text: String
@@ -21,9 +22,17 @@ public struct Entry: Codable, Identifiable, Hashable, Sendable {
     }
     /// Optional, so notes saved before images existed still load.
     private var imageFiles: [String]?
+    /// On the Xem sau list: kept for later, on no day, never carried over.
+    /// `day` then keeps the day it was saved on.
+    public var isLater: Bool {
+        get { later ?? false }
+        set { later = newValue ? true : nil }
+    }
+    /// Optional, so notes saved before Xem sau existed still load.
+    private var later: Bool?
 
     public init(id: UUID = UUID(), text: String, kind: EntryKind, day: Date, order: Double,
-                isDone: Bool = false, createdAt: Date = .now, images: [String] = []) {
+                isDone: Bool = false, createdAt: Date = .now, images: [String] = [], isLater: Bool = false) {
         self.id = id
         self.text = text
         self.kind = kind
@@ -32,6 +41,7 @@ public struct Entry: Codable, Identifiable, Hashable, Sendable {
         self.isDone = isDone
         self.createdAt = createdAt
         self.images = images
+        self.isLater = isLater
     }
 }
 
@@ -51,7 +61,16 @@ public struct Notebook: Codable, Sendable {
 
     public func entries(on day: Date) -> [Entry] {
         let start = Day.start(of: day)
-        return entries.filter { $0.day == start }.sorted { ($0.order, $0.createdAt) < ($1.order, $1.createdAt) }
+        return sorted(entries.filter { !$0.isLater && $0.day == start })
+    }
+
+    /// The Xem sau list, in its own order.
+    public var laterEntries: [Entry] {
+        sorted(entries.filter(\.isLater))
+    }
+
+    private func sorted(_ list: [Entry]) -> [Entry] {
+        list.sorted { ($0.order, $0.createdAt) < ($1.order, $1.createdAt) }
     }
 
     public func counts(on day: Date) -> (remaining: Int, done: Int) {
@@ -71,13 +90,15 @@ public struct Notebook: Codable, Sendable {
 
     // MARK: Changing
 
-    /// Adds what people typed, and any pasted images, to the end of `day`.
+    /// Adds what people typed, and any pasted images, to the end of `day`,
+    /// or of the Xem sau list when `later` (then `day` is the day it was saved).
     /// Nil when there is neither text nor an image.
     @discardableResult
-    public mutating func add(_ raw: String, defaultKind: EntryKind, day: Date, images: [String] = []) -> Entry? {
+    public mutating func add(_ raw: String, defaultKind: EntryKind, day: Date, images: [String] = [], later: Bool = false) -> Entry? {
         guard let parsed = EntryInput.parse(raw, defaultKind: defaultKind, allowEmpty: !images.isEmpty) else { return nil }
+        let list = later ? laterEntries : entries(on: day)
         let entry = Entry(text: parsed.text, kind: parsed.kind, day: day,
-                          order: (entries(on: day).last?.order ?? -1) + 1, images: images)
+                          order: (list.last?.order ?? -1) + 1, images: images, isLater: later)
         entries.append(entry)
         return entry
     }
@@ -118,18 +139,36 @@ public struct Notebook: Codable, Sendable {
         }
     }
 
-    /// Moves a block to the end of another day.
+    /// Moves a block to the end of another day, also from Xem sau.
     public mutating func move(_ id: UUID, to day: Date) {
         let start = Day.start(of: day)
-        guard let i = index(of: id), entries[i].day != start else { return }
+        guard let i = index(of: id), entries[i].isLater || entries[i].day != start else { return }
         entries[i].order = (entries(on: start).last?.order ?? -1) + 1
         entries[i].day = start
+        entries[i].isLater = false
+        entries[i].carriedFrom = nil
+    }
+
+    /// Moves a block from its day to the end of the Xem sau list.
+    public mutating func moveToLater(_ id: UUID) {
+        guard let i = index(of: id), !entries[i].isLater else { return }
+        entries[i].order = (laterEntries.last?.order ?? -1) + 1
+        entries[i].isLater = true
         entries[i].carriedFrom = nil
     }
 
     /// Reorders the blocks of one day, like List's onMove.
     public mutating func reorder(on day: Date, from source: IndexSet, to destination: Int) {
-        var list = entries(on: day)
+        reorder(entries(on: day), from: source, to: destination)
+    }
+
+    /// Reorders the Xem sau list, like List's onMove.
+    public mutating func reorderLater(from source: IndexSet, to destination: Int) {
+        reorder(laterEntries, from: source, to: destination)
+    }
+
+    private mutating func reorder(_ list: [Entry], from source: IndexSet, to destination: Int) {
+        var list = list
         let moving = source.map { list[$0] }
         for offset in source.sorted(by: >) { list.remove(at: offset) }
         let target = destination - source.filter { $0 < destination }.count
@@ -175,7 +214,7 @@ public struct Notebook: Codable, Sendable {
     public mutating func rollOver(today: Date = .now) -> Int {
         let start = Day.start(of: today)
         let carried = entries.indices
-            .filter { Day.shouldCarry(kind: entries[$0].kind, isDone: entries[$0].isDone, day: entries[$0].day, today: start) }
+            .filter { !entries[$0].isLater && Day.shouldCarry(kind: entries[$0].kind, isDone: entries[$0].isDone, day: entries[$0].day, today: start) }
             .sorted { (entries[$0].day, entries[$0].order) < (entries[$1].day, entries[$1].order) }
         guard !carried.isEmpty else { return 0 }
         let top = entries(on: start).first?.order ?? 0

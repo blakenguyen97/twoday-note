@@ -5,7 +5,7 @@ import SwiftUI
 /// Screenshot mode for agents.
 ///   APP_STORE=/tmp/TwodayNote-test.json APP_SNAPSHOT=/tmp/shots ~/Applications/TwodayNote.app/Contents/MacOS/TwodayNote
 /// opens the popover from the menu bar and writes day0-light.png, day0-dark.png
-/// … for each day, image-light.png (the image viewer), plus settings-light.png
+/// … for each day, later-light.png (Xem sau), image-light.png (the image viewer), plus settings-light.png
 /// and settings-dark.png, then quits.
 /// Each PNG gets a <name>-layout.json with the grid probes (tools/check-layout.swift).
 /// APP_SNAPSHOT_PAGES=day0,settings limits the pages.
@@ -35,6 +35,12 @@ enum Snapshot {
                     app.model.dayOffset = offset
                     try? await Task.sleep(for: .seconds(0.8))
                     capture(app.popoverWindow, to: "\(dir)/day\(offset)-\(mode).png")
+                }
+                if only == nil || only?.contains("later") == true {
+                    if !app.popover.isShown { app.showPopover() }
+                    app.model.dayOffset = AppModel.laterTab
+                    try? await Task.sleep(for: .seconds(0.8))
+                    capture(app.popoverWindow, to: "\(dir)/later-\(mode).png")
                 }
                 if only == nil || only?.contains("focus") == true {
                     // Today with a Focus session 4 minutes in.

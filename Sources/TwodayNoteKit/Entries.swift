@@ -117,6 +117,12 @@ public enum Day {
         return "\(weekday(date, calendar: calendar)), \(parts.day ?? 1) tháng \(parts.month ?? 1)"
     }
 
+    /// "5/11": the day a Xem sau block was saved.
+    public static func short(_ date: Date, calendar: Calendar = .current) -> String {
+        let parts = calendar.dateComponents([.day, .month], from: date)
+        return "\(parts.day ?? 1)/\(parts.month ?? 1)"
+    }
+
     /// A task that is not done and belongs to a day before today moves to today.
     public static func shouldCarry(kind: EntryKind, isDone: Bool, day: Date, today: Date) -> Bool {
         kind == .task && !isDone && day < start(of: today)
@@ -132,5 +138,10 @@ public enum Progress {
         case (_, 0): "Còn \(remaining) việc"
         default: "Còn \(remaining) việc · xong \(done)"
         }
+    }
+
+    /// The line under the Xem sau title.
+    public static func later(count: Int) -> String {
+        count == 0 ? "Không gấp, không hạn, xem khi rảnh" : "\(count) mục để xem khi rảnh"
     }
 }

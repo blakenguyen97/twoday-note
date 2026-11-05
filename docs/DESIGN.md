@@ -27,6 +27,14 @@ Khối chỉ có ảnh, không chữ, vẫn được giữ.
 Task chưa xong của những ngày trước tự chuyển sang hôm nay (bật/tắt trong
 Cài đặt) và ghi "từ T4" để biết nó bị dời.
 
+## Xem sau
+
+Tab thứ tư, sau ba ngày: chỗ để những thứ không quan trọng, vô tình gặp
+(link, đoạn trích, ảnh chụp màn hình) và muốn xem lại khi rảnh. Không thuộc
+ngày nào, không có hạn, không bao giờ tự chuyển sang hôm nay. Khối mới ở đây
+mặc định là Ghi chú (ngày vẫn mặc định Task), và ghi ngày lưu ("5/11") ở bên
+phải. Dời qua lại bằng menu chuột phải > Dời sang.
+
 ## Command map
 
 | Hành động | Ở đâu | Phím tắt |
@@ -35,6 +43,7 @@ Cài đặt) và ghi "từ T4" để biết nó bị dời.
 | Thêm khối | ô nhập | Return |
 | Đổi loại khối mới | menu cạnh ô nhập | gõ tiền tố |
 | Chọn ngày | segmented control | ⌘1 ⌘2 ⌘3 |
+| Mở Xem sau | tab cuối của segmented control | ⌘4 |
 | Đánh dấu xong | checkbox | — |
 | Sửa nội dung | bấm vào chữ | Return để xong |
 | Dán ảnh | vào khối đang sửa, hoặc chờ dưới ô nhập tới khi Return; menu chuột phải > Dán ảnh | ⌘V |
@@ -42,7 +51,7 @@ Cài đặt) và ghi "từ T4" để biết nó bị dời.
 | Phóng to / thu nhỏ ảnh | pinch trên trackpad, ⌃ + lăn chuột (quanh con trỏ), nhấp đúp vào ảnh, nút − % + dưới ảnh | ⌘= ⌘- ⌘0 (vừa khung) |
 | Kéo ảnh khi đã phóng to | kéo bằng chuột, hoặc cuộn hai ngón | — |
 | Sao chép / xoá ảnh / mở bằng Xem trước | menu chuột phải trên ảnh, thanh trên trình xem ảnh | — |
-| Đổi loại / dời ngày / xoá | menu chuột phải | — |
+| Đổi loại / dời ngày / cất vào Xem sau / xoá | menu chuột phải | — |
 | Sắp xếp lại | kéo thả | — |
 | Xoá việc đã xong | menu ••• | — |
 | Hoàn tác xoá | thông báo nhỏ trên thanh Focus | — |
@@ -67,6 +76,7 @@ khi không còn khối, ảnh chờ, hay Hoàn tác nào dùng tới.
 
 - Hôm nay trống: "Hôm nay chưa có gì" + gợi ý gõ ở ô phía trên.
 - Ngày mai / ngày kia trống: "Ngày mai còn trống" + cùng gợi ý.
+- Xem sau trống: "Chưa có gì để xem sau" + nó dùng để làm gì.
 
 ## Feeling
 

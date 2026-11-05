@@ -7,10 +7,12 @@ import TwodayNoteKit
 @Observable
 final class AppModel {
     private(set) var book: Notebook
-    /// 0 today, 1 tomorrow, 2 the day after.
+    /// 0 today, 1 tomorrow, 2 the day after, `laterTab` the Xem sau list.
     var dayOffset = 0
-    /// The kind a new block gets when it has no prefix.
-    var newKind: EntryKind = .task
+    /// The kind a new block on a day gets when it has no prefix.
+    var dayKind: EntryKind = .task
+    /// The same on Xem sau, where most things are notes, not tasks.
+    var laterKind: EntryKind = .note
     /// Bumped each time the popover opens, so the add field takes focus.
     var focusTick = 0
     /// The last removal, while its Undo is on screen. Image files the
@@ -38,6 +40,16 @@ final class AppModel {
     @ObservationIgnored private var saveTask: Task<Void, Never>?
 
     static let dayCount = 3
+    /// The tab after the days: things kept for later, on no day.
+    static let laterTab = dayCount
+
+    var isLater: Bool { dayOffset == Self.laterTab }
+
+    /// The kind a new block gets when it has no prefix, on this tab.
+    var newKind: EntryKind {
+        get { isLater ? laterKind : dayKind }
+        set { if isLater { laterKind = newValue } else { dayKind = newValue } }
+    }
 
     init() {
         book = Store.load()
@@ -45,14 +57,17 @@ final class AppModel {
     }
 
     var selectedDay: Date { Day.adding(dayOffset, to: today) }
-    var visible: [Entry] { book.entries(on: selectedDay) }
-    func label(offset: Int) -> String { Day.label(offset: offset, today: today) }
+    var visible: [Entry] { isLater ? book.laterEntries : book.entries(on: selectedDay) }
+    func label(offset: Int) -> String {
+        offset == Self.laterTab ? "Xem sau" : Day.label(offset: offset, today: today)
+    }
     var todayCounts: (remaining: Int, done: Int) { book.counts(on: today) }
 
     // MARK: Changes
 
     func add(_ raw: String) -> Bool {
-        guard book.add(raw, defaultKind: newKind, day: selectedDay, images: pendingImages) != nil else { return false }
+        guard book.add(raw, defaultKind: newKind, day: isLater ? today : selectedDay,
+                       images: pendingImages, later: isLater) != nil else { return false }
         pendingImages = []
         changed()
         return true
@@ -123,8 +138,18 @@ final class AppModel {
         changed()
     }
 
+    /// Xem sau: off every day, until moved back to one.
+    func moveToLater(_ id: UUID) {
+        book.moveToLater(id)
+        changed()
+    }
+
     func reorder(from source: IndexSet, to destination: Int) {
-        book.reorder(on: selectedDay, from: source, to: destination)
+        if isLater {
+            book.reorderLater(from: source, to: destination)
+        } else {
+            book.reorder(on: selectedDay, from: source, to: destination)
+        }
         changed()
     }
 
