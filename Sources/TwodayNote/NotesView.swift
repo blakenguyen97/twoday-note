@@ -8,10 +8,11 @@ import TwodayNoteKit
 struct NotesView: View {
     @Environment(AppModel.self) private var model
 
-    static let size = CGSize(width: 360, height: 560)
+    // Taller by the header's breathing room, so as many blocks fit.
+    static let size = CGSize(width: 360, height: 584)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.md) {
+        VStack(alignment: .leading, spacing: Space.lg) {
             DayHeader()
                 .gridProbe("header", area: "popover")
                 .padding(.horizontal, Space.lg)
@@ -27,7 +28,7 @@ struct NotesView: View {
                     .padding(.horizontal, Space.lg)
             }
         }
-        .padding(.top, Space.lg)
+        .padding(.top, Space.xl)
         .frame(width: Self.size.width, height: Self.size.height, alignment: .top)
         .background { DayShortcuts() }
         .overlay {
@@ -52,13 +53,15 @@ private struct DayHeader: View {
     var body: some View {
         @Bindable var model = model
         let counts = model.book.counts(on: model.selectedDay)
-        VStack(alignment: .leading, spacing: Space.md) {
+        VStack(alignment: .leading, spacing: Space.lg) {
             HStack(alignment: .center) {
                 Lockup()
                 Spacer()
                 MoreMenu(hasDone: counts.done > 0)
             }
-            VStack(alignment: .leading, spacing: 2) {
+            // The brand stands apart from the day below it.
+            .padding(.bottom, Space.xs)
+            VStack(alignment: .leading, spacing: Space.xs) {
                 Text(Day.long(model.selectedDay))
                     .font(.title3.weight(.semibold))
                 Text(Progress.summary(remaining: counts.remaining, done: counts.done))
