@@ -35,6 +35,25 @@ enum SeedData {
         book.add("* Quán cà phê mới ở Hai Bà Trưng, cuối tuần ghé thử", defaultKind: .note, day: Day.adding(-1, to: today), later: true)
         let shot = ImageStore.save(SampleImage.png(hue: 0.35), ext: "png").map { [$0] } ?? []
         book.add("Ảnh chụp bảng giá gói cloud, so sánh sau", defaultKind: .note, day: today, images: shot, later: true)
+        // Pasted links: they go under GitHub and YouTube headings. The
+        // details are filled in here, so snapshots need no network.
+        if let repo = book.add("https://github.com/github/spec-kit", defaultKind: .note, day: Day.adding(-2, to: today), later: true),
+           var preview = repo.link {
+            preview.summary = "💫 Toolkit to help you get started with SDD or any other process!"
+            preview.topics = ["ai", "copilot", "development", "engineering", "prd"]
+            preview.stars = 147_472
+            preview.language = "Python"
+            preview.checked = true
+            book.setPreview(preview, for: repo.id)
+        }
+        if let video = book.add("https://youtu.be/aqz-KE-bpKQ", defaultKind: .note, day: today, later: true),
+           var preview = video.link {
+            preview.title = "Làm app thanh menu cho Mac bằng SwiftUI, từ đầu"
+            preview.author = "Kênh Lập Trình Swift"
+            preview.thumbnail = ImageStore.save(SampleImage.png(hue: 0.02, size: NSSize(width: 640, height: 360)), ext: "png")
+            preview.checked = true
+            book.setPreview(preview, for: video.id)
+        }
         model.replace(book)
         model.refreshDay()
     }

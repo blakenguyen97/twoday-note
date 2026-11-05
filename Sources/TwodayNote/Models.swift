@@ -38,6 +38,9 @@ final class AppModel {
     /// Called when Focus starts, pauses, resumes, stops, or finishes.
     @ObservationIgnored var onFocusChange: (() -> Void)?
     @ObservationIgnored private var saveTask: Task<Void, Never>?
+    /// Links being looked up now, and when a lookup last failed.
+    @ObservationIgnored private var fetching: Set<String> = []
+    @ObservationIgnored private var failedAt: [String: Date] = [:]
 
     static let dayCount = 2
     /// The tab after the days: things kept for later, on no day.
@@ -70,7 +73,45 @@ final class AppModel {
                        images: pendingImages, later: isLater) != nil else { return false }
         pendingImages = []
         changed()
+        fetchLinks()
         return true
+    }
+
+    // MARK: Links
+
+    /// Asks GitHub or YouTube about links it has not answered for yet.
+    /// A failed lookup waits a few minutes before the next try.
+    func fetchLinks(now: Date = .now) {
+        // The self-test checks the rules offline.
+        guard !SelfTest.requested else { return }
+        for entry in book.uncheckedLinks {
+            guard let preview = entry.link, !fetching.contains(preview.url),
+                  failedAt[preview.url].map({ now.timeIntervalSince($0) > 300 }) ?? true else { continue }
+            fetching.insert(preview.url)
+            Task { [weak self] in
+                let result = await LinkFetcher.fetch(preview)
+                guard let self else { return }
+                self.fetching.remove(preview.url)
+                guard let result else {
+                    self.failedAt[preview.url] = .now
+                    return
+                }
+                self.failedAt[preview.url] = nil
+                if self.book.setPreview(result, for: entry.id) { self.changed(countsChanged: false) }
+            }
+        }
+    }
+
+    /// Opens a block's link in the browser.
+    func openLink(_ entry: Entry) {
+        guard let url = entry.link.flatMap({ URL(string: $0.url) }) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    func copyLink(_ entry: Entry) {
+        guard let link = entry.link else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(link.url, forType: .string)
     }
 
     /// Finishing a task deletes its images, with Undo.
@@ -124,13 +165,14 @@ final class AppModel {
         // The images of an unreadable notes file may still be wanted.
         guard !Store.loadFailed else { return }
         var keep = book.imageNames.union(pendingImages)
-        keep.formUnion(undo?.entries.flatMap(\.images) ?? [])
+        keep.formUnion(undo?.entries.flatMap(\.files) ?? [])
         ImageStore.prune(keeping: keep)
     }
 
     func setKind(_ id: UUID, _ kind: EntryKind) {
         book.setKind(id, kind)
         changed()
+        fetchLinks()
     }
 
     func move(_ id: UUID, toOffset offset: Int) {
@@ -165,6 +207,7 @@ final class AppModel {
             undo = UndoNotice(message: "Đã xoá khối trống", entries: [removed])
         }
         changed()
+        fetchLinks()
     }
 
     func delete(_ id: UUID) {
@@ -194,12 +237,14 @@ final class AppModel {
     func refreshDay(now: Date = .now) {
         today = Day.start(of: now)
         if Prefs.carryOver, book.rollOver(today: today) > 0 { changed() }
+        fetchLinks(now: now)
     }
 
     /// For the self-test and seed data only.
     func replace(_ notebook: Notebook) {
         book = notebook
         undo = nil
+        pruneImages()
         changed()
     }
 

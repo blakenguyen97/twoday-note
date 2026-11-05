@@ -81,6 +81,35 @@ enum SelfTest {
             model.dayOffset = AppModel.laterTab
             model.delete(saved.id)
             model.undo = nil
+
+            // Links on Xem sau go under GitHub and YouTube headings.
+            _ = model.add("Đọc khi rảnh")
+            check("a pasted GitHub link gets a GitHub heading",
+                  model.add("https://github.com/github/spec-kit") && model.visible.map(\.text).suffix(2) == ["GitHub", "https://github.com/github/spec-kit"])
+            check("…and a card with the repo name", model.visible.last?.link.map { $0.title == "spec-kit" && $0.repoPath == "github/spec-kit" } == true)
+            check("a pasted YouTube link gets a YouTube heading",
+                  model.add("https://youtu.be/dQw4w9WgXcQ") && model.visible.map(\.text).suffix(2) == ["YouTube", "https://youtu.be/dQw4w9WgXcQ"])
+            _ = model.add("https://github.com/apple/swift")
+            _ = model.add("Ghi chú thường")
+            check("a second GitHub link joins its section, a plain note stays above",
+                  model.visible.map(\.text) == ["Đọc khi rảnh", "Ghi chú thường", "GitHub", "https://github.com/github/spec-kit",
+                                                "https://github.com/apple/swift", "YouTube", "https://youtu.be/dQw4w9WgXcQ"],
+                  model.visible.map(\.text).joined(separator: " | "))
+            let video = model.visible.last!
+            var preview = video.link!
+            preview.thumbnail = ImageStore.save(SampleImage.png(), ext: "png")
+            preview.checked = true
+            var filled = model.book
+            filled.setPreview(preview, for: video.id)
+            model.replace(filled)
+            let thumb = ImageStore.url(preview.thumbnail ?? "")
+            model.delete(video.id)
+            check("a deleted video keeps its thumbnail while Hoàn tác shows", FileManager.default.fileExists(atPath: thumb.path))
+            model.undoRemoval()
+            check("Hoàn tác brings the video back with its thumbnail",
+                  model.book.entries.first { $0.id == video.id }?.link?.thumbnail == preview.thumbnail)
+            model.replace(Notebook())
+            check("the thumbnail file goes with its block", !FileManager.default.fileExists(atPath: thumb.path))
             model.dayOffset = 0
 
             // Pasted images.

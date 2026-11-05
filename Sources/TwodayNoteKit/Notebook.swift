@@ -30,6 +30,8 @@ public struct Entry: Codable, Identifiable, Hashable, Sendable {
     }
     /// Optional, so notes saved before Xem sau existed still load.
     private var later: Bool?
+    /// A GitHub or YouTube link in the text, with what the site said about it.
+    public var link: LinkPreview?
 
     public init(id: UUID = UUID(), text: String, kind: EntryKind, day: Date, order: Double,
                 isDone: Bool = false, createdAt: Date = .now, images: [String] = [], isLater: Bool = false) {
@@ -42,6 +44,7 @@ public struct Entry: Codable, Identifiable, Hashable, Sendable {
         self.createdAt = createdAt
         self.images = images
         self.isLater = isLater
+        link = kind == .heading ? nil : LinkRef.find(in: text).map(LinkPreview.init)
     }
 }
 
@@ -83,9 +86,14 @@ public struct Notebook: Codable, Sendable {
         entries.firstIndex { $0.id == id }
     }
 
-    /// Every image file a block uses.
+    /// Every image file a block uses, link thumbnails too.
     public var imageNames: Set<String> {
-        Set(entries.flatMap(\.images))
+        Set(entries.flatMap(\.files))
+    }
+
+    /// Blocks whose link the site has not answered for yet.
+    public var uncheckedLinks: [Entry] {
+        entries.filter { $0.link?.checked == false }
     }
 
     // MARK: Changing
@@ -97,10 +105,59 @@ public struct Notebook: Codable, Sendable {
     public mutating func add(_ raw: String, defaultKind: EntryKind, day: Date, images: [String] = [], later: Bool = false) -> Entry? {
         guard let parsed = EntryInput.parse(raw, defaultKind: defaultKind, allowEmpty: !images.isEmpty) else { return nil }
         let list = later ? laterEntries : entries(on: day)
-        let entry = Entry(text: parsed.text, kind: parsed.kind, day: day,
+        var entry = Entry(text: parsed.text, kind: parsed.kind, day: day,
                           order: (list.last?.order ?? -1) + 1, images: images, isLater: later)
+        if later { entry.order = laterOrder(for: entry) }
         entries.append(entry)
         return entry
+    }
+
+    /// Where a block lands on Xem sau: a link under its site's heading,
+    /// anything else above the GitHub and YouTube sections at the end, or
+    /// at the end when there are none.
+    private mutating func laterOrder(for entry: Entry) -> Double {
+        if entry.kind != .heading, let site = entry.link?.site { return orderUnderHeading(site, day: entry.day) }
+        let list = laterEntries.filter { $0.id != entry.id }
+        let end = (list.last?.order ?? -1) + 1
+        if entry.kind == .heading, LinkSite.allCases.contains(where: { Self.matches(entry.text, $0.heading) }) { return end }
+        // The run of site sections at the end of the list.
+        var first: Int?
+        for i in list.indices.reversed() where list[i].kind == .heading {
+            guard LinkSite.allCases.contains(where: { Self.matches(list[i].text, $0.heading) }) else { break }
+            first = i
+        }
+        guard let first else { return end }
+        return first == 0 ? list[0].order - 1 : (list[first - 1].order + list[first].order) / 2
+    }
+
+    /// On Xem sau, a GitHub or YouTube link goes at the end of the section
+    /// under its site's heading. Adds the heading at the end of the list
+    /// when there is none. Returns the order for the new block.
+    private mutating func orderUnderHeading(_ site: LinkSite, day: Date) -> Double {
+        let list = laterEntries
+        guard let top = list.firstIndex(where: { $0.kind == .heading && Self.matches($0.text, site.heading) }) else {
+            let heading = Entry(text: site.heading, kind: .heading, day: day,
+                                order: (list.last?.order ?? -1) + 1, isLater: true)
+            entries.append(heading)
+            return heading.order + 1
+        }
+        let next = list[(top + 1)...].firstIndex { $0.kind == .heading }
+        guard let next else { return (list.last?.order ?? list[top].order) + 1 }
+        // Between the section's last block and the next heading.
+        return (list[next - 1].order + list[next].order) / 2
+    }
+
+    private static func matches(_ text: String, _ heading: String) -> Bool {
+        text.trimmingCharacters(in: .whitespaces).compare(heading, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+    }
+
+    /// Saves what the site said about a block's link. Ignored when the
+    /// block is gone or its link changed meanwhile.
+    @discardableResult
+    public mutating func setPreview(_ preview: LinkPreview, for id: UUID) -> Bool {
+        guard let i = index(of: id), entries[i].link?.url == preview.url else { return false }
+        entries[i].link = preview
+        return true
     }
 
     /// Checks or unchecks a task. Finishing a task drops its images; then
@@ -133,6 +190,12 @@ public struct Notebook: Codable, Sendable {
     public mutating func setKind(_ id: UUID, _ kind: EntryKind) {
         guard let i = index(of: id) else { return }
         entries[i].kind = kind
+        // Headings are plain titles: no link card.
+        if kind == .heading {
+            entries[i].link = nil
+        } else if entries[i].link == nil {
+            entries[i].link = LinkRef.find(in: entries[i].text).map(LinkPreview.init)
+        }
         if kind != .task {
             entries[i].isDone = false
             entries[i].doneAt = nil
@@ -152,7 +215,9 @@ public struct Notebook: Codable, Sendable {
     /// Moves a block from its day to the end of the Xem sau list.
     public mutating func moveToLater(_ id: UUID) {
         guard let i = index(of: id), !entries[i].isLater else { return }
-        entries[i].order = (laterEntries.last?.order ?? -1) + 1
+        let order = laterOrder(for: entries[i])
+        guard let i = index(of: id) else { return }
+        entries[i].order = order
         entries[i].isLater = true
         entries[i].carriedFrom = nil
     }
@@ -184,6 +249,9 @@ public struct Notebook: Codable, Sendable {
         guard let i = index(of: id) else { return nil }
         if let clean = EntryText.clean(entries[i].text) {
             entries[i].text = clean
+            // A link added, changed, or taken out while editing.
+            let ref = entries[i].kind == .heading ? nil : LinkRef.find(in: clean)
+            if ref?.url != entries[i].link?.url { entries[i].link = ref.map(LinkPreview.init) }
             return nil
         }
         guard entries[i].images.isEmpty else {

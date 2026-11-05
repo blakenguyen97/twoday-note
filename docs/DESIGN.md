@@ -36,6 +36,15 @@ ngày nào, không có hạn, không bao giờ tự chuyển sang hôm nay. Kh�
 mặc định là Ghi chú (ngày vẫn mặc định Task), và ghi ngày lưu ("5/11") ở bên
 phải. Dời qua lại bằng menu chuột phải > Dời sang.
 
+Dán link GitHub hoặc YouTube vào Xem sau thì khối tự vào dưới tiêu đề
+"GitHub" hoặc "YouTube" (chưa có thì tự tạo, ở cuối danh sách; ghi chú thường
+nằm phía trên các mục này). Khối link hiện thẻ thay cho chữ: repo GitHub có tên,
+nhãn Repo, owner/repo, số sao, ngôn ngữ, mô tả và topic; video YouTube có
+thumbnail ở đầu, tiêu đề và kênh. Thông tin lấy từ API công khai của GitHub
+và oEmbed của YouTube (không cần key), lưu cùng khối nên vẫn hiện khi offline;
+lỗi mạng thì thử lại khi mở popover. Ở các ngày, link cũng có thẻ nhưng không
+gom nhóm.
+
 ## Command map
 
 | Hành động | Ở đâu | Phím tắt |
@@ -53,6 +62,7 @@ phải. Dời qua lại bằng menu chuột phải > Dời sang.
 | Kéo ảnh khi đã phóng to | kéo bằng chuột, hoặc cuộn hai ngón | — |
 | Sao chép / xoá ảnh / mở bằng Xem trước | menu chuột phải trên ảnh, thanh trên trình xem ảnh | — |
 | Đổi loại / dời ngày / cất vào Xem sau / xoá | menu chuột phải | — |
+| Mở link / sao chép link / sửa chữ của khối link | bấm vào tên hoặc thumbnail; menu chuột phải | — |
 | Sắp xếp lại | kéo thả | — |
 | Xoá việc đã xong | menu ••• | — |
 | Hoàn tác xoá | thông báo nhỏ trên thanh Focus | — |

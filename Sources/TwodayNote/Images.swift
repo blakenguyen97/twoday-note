@@ -86,24 +86,35 @@ enum ImageStore {
         for file in files where !keeping.contains(file) && !file.hasPrefix(".") {
             try? FileManager.default.removeItem(at: url(file))
             thumbnails.removeObject(forKey: file as NSString)
+            previews.removeObject(forKey: file as NSString)
         }
     }
 
     // MARK: Thumbnails
 
     nonisolated(unsafe) private static let thumbnails = NSCache<NSString, NSImage>()
+    nonisolated(unsafe) private static let previews = NSCache<NSString, NSImage>()
 
     /// A small copy for the block rows, made once per file.
     static func thumbnail(_ name: String) -> NSImage? {
-        if let cached = thumbnails.object(forKey: name as NSString) { return cached }
+        scaled(name, maxPixels: 240, cache: thumbnails)
+    }
+
+    /// A copy as wide as a block, for a video's thumbnail.
+    static func preview(_ name: String) -> NSImage? {
+        scaled(name, maxPixels: 720, cache: previews)
+    }
+
+    private static func scaled(_ name: String, maxPixels: Int, cache: NSCache<NSString, NSImage>) -> NSImage? {
+        if let cached = cache.object(forKey: name as NSString) { return cached }
         guard let source = CGImageSourceCreateWithURL(url(name) as CFURL, nil),
               let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                   kCGImageSourceCreateThumbnailFromImageAlways: true,
                   kCGImageSourceCreateThumbnailWithTransform: true,
-                  kCGImageSourceThumbnailMaxPixelSize: 240,
+                  kCGImageSourceThumbnailMaxPixelSize: maxPixels,
               ] as CFDictionary) else { return nil }
         let image = NSImage(cgImage: cg, size: .zero)
-        thumbnails.setObject(image, forKey: name as NSString)
+        cache.setObject(image, forKey: name as NSString)
         return image
     }
 }

@@ -64,7 +64,7 @@ private struct DayHeader: View {
             VStack(alignment: .leading, spacing: Space.xs) {
                 Text(model.isLater ? "Xem sau" : Day.long(model.selectedDay))
                     .font(.title3.weight(.semibold))
-                Text(model.isLater ? Progress.later(count: model.visible.count)
+                Text(model.isLater ? Progress.later(count: model.visible.count { $0.kind != .heading })
                                    : Progress.summary(remaining: counts.remaining, done: counts.done))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -250,6 +250,8 @@ private struct EntryRow: View {
     let entry: Entry
     // State as a stored property: the @State macro needs Xcode (see CLAUDE.md).
     private let draftState: State<String>
+    /// A link block hides its text, which is only the link, until Sửa chữ.
+    private let showsFieldState = State(initialValue: false)
     @FocusState private var editing: Bool
 
     init(entry: Entry) {
@@ -262,24 +264,18 @@ private struct EntryRow: View {
         nonmutating set { draftState.wrappedValue = newValue }
     }
 
+    /// The text field shows unless the text is only the link the card shows.
+    private var showsText: Bool {
+        guard let link = entry.link else { return true }
+        return entry.text != link.url || showsFieldState.wrappedValue || editing
+    }
+
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Space.sm) {
-            leading
-            content
-            if let from = entry.carriedFrom, !entry.isDone {
-                // Overdue: carried over from an earlier day, still not done.
-                Label(Day.lateLabel(from: from, today: model.today), systemImage: "exclamationmark.circle")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                    .fixedSize()
-                    .help("Quá hạn: chưa xong từ \(Day.long(from)), tự chuyển sang hôm nay")
+        VStack(alignment: .leading, spacing: Space.sm) {
+            if let link = entry.link, link.site == .youtube, link.key != nil {
+                VideoThumbnail(link: link) { model.openLink(entry) }
             }
-            if entry.isLater {
-                Text(Day.short(entry.createdAt))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .help("Lưu ngày \(Day.long(entry.createdAt))")
-            }
+            row
         }
         .padding(.horizontal, entry.kind == .heading ? Space.xs : Space.md)
         .padding(.top, entry.kind == .heading ? Space.md : Space.sm)
@@ -292,17 +288,49 @@ private struct EntryRow: View {
             }
         }
         .contentShape(.rect)
-        .contextMenu { EntryMenu(entry: entry) }
+        .contextMenu { EntryMenu(entry: entry, editText: editAction) }
         .onChange(of: draft) { _, new in model.setText(entry.id, new) }
         .onChange(of: editing) { _, now in
             if now {
                 model.editingID = entry.id
             } else {
+                showsFieldState.wrappedValue = false
                 if model.editingID == entry.id { model.editingID = nil }
                 model.commitText(entry.id)
             }
         }
         .onChange(of: entry.text) { _, new in if !editing, draft != new { draft = new } }
+    }
+
+    private var editAction: (() -> Void)? {
+        showsText ? nil : { editText() }
+    }
+
+    /// Sửa chữ on a link block: shows its text and puts the cursor there.
+    private func editText() {
+        showsFieldState.wrappedValue = true
+        Task { editing = true }
+    }
+
+    private var row: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.sm) {
+            leading
+            content
+            if let from = entry.carriedFrom, !entry.isDone {
+                // Overdue: carried over from an earlier day, still not done.
+                Label(Day.lateLabel(from: from, today: model.today), systemImage: "exclamationmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize()
+                    .help("Quá hạn: chưa xong từ \(Day.long(from)), tự chuyển sang hôm nay")
+            }
+            if entry.isLater, entry.kind != .heading {
+                Text(Day.short(entry.createdAt))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .help("Lưu ngày \(Day.long(entry.createdAt))")
+            }
+        }
     }
 
     @ViewBuilder
@@ -313,7 +341,8 @@ private struct EntryRow: View {
                 .toggleStyle(.checkbox)
                 .labelsHidden()
         case .note:
-            Image(systemName: entry.kind.symbol)
+            // A link note shows its site: code for GitHub, a video for YouTube.
+            Image(systemName: entry.link?.site.symbol ?? entry.kind.symbol)
                 .foregroundStyle(.secondary)
                 .frame(width: 16)
                 .accessibilityLabel(entry.kind.title)
@@ -329,7 +358,10 @@ private struct EntryRow: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: Space.sm) {
-            text
+            if let link = entry.link {
+                LinkInfo(link: link, isDone: entry.isDone) { model.openLink(entry) }
+            }
+            if showsText { text }
             if !entry.images.isEmpty {
                 ImageStrip(names: entry.images, entryID: entry.id)
             }
@@ -359,8 +391,18 @@ private struct EntryRow: View {
 private struct EntryMenu: View {
     @Environment(AppModel.self) private var model
     let entry: Entry
+    /// Shows a link block's hidden text for editing. Nil when it shows.
+    let editText: (() -> Void)?
 
     var body: some View {
+        if entry.link != nil {
+            Button("Mở link", systemImage: "arrow.up.forward.app") { model.openLink(entry) }
+            Button("Sao chép link", systemImage: "link") { model.copyLink(entry) }
+            if let editText, !entry.isDone {
+                Button("Sửa chữ", systemImage: "pencil", action: editText)
+            }
+            Divider()
+        }
         if entry.kind == .task {
             Button(entry.isDone ? "Đánh dấu chưa xong" : "Đánh dấu đã xong") { model.toggleDone(entry.id) }
         }
