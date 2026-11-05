@@ -174,8 +174,8 @@ public enum Strings {
         "Thế là xong!": "You’re all set!",
         "Việc, ghi chú và ý tưởng cho hôm nay và ngày mai, ngay trên thanh menu. Bấm vào icon, hoặc nhấn ⌃⌥N ở bất kỳ app nào.":
             "Tasks, notes, and ideas for today and tomorrow, right in the menu bar. Click the icon, or press ⌃⌥N in any app.",
-        "Mỗi dòng thành một khối, mặc định là task. Gõ # ở đầu dòng để có tiêu đề, - ghi chú, * ý tưởng.":
-            "Each line becomes a block, a task by default. Start a line with # for a heading, - for a note, * for an idea.",
+        "Mỗi dòng thành một khối ở trên cùng, mặc định là task; kéo thả để xếp lại. Gõ # ở đầu dòng để có tiêu đề, - ghi chú, * ý tưởng.":
+            "Each line becomes a block at the top, a task by default; drag to reorder. Start a line with # for a heading, - for a note, * for an idea.",
         "Ghi trước cho ngày mai, hoặc cất link, đoạn trích, ảnh chụp màn hình vào Xem sau để xem khi rảnh. Chuyển nhanh bằng ⌘1 ⌘2 ⌘3.":
             "Plan tomorrow ahead, or keep links, quotes, and screenshots in Later for when you have time. Switch with ⌘1 ⌘2 ⌘3.",
         "Tick khi xong. Task chưa xong của hôm trước tự sang hôm nay, có dấu quá hạn màu cam. Xoá không hỏi lại, vì luôn có Hoàn tác.":
@@ -257,7 +257,6 @@ public enum Strings {
         "Không bật được: {}": "Couldn’t turn on: {}",
         "Phím tắt toàn cục ⌃⌥N": "Global shortcut ⌃⌥N",
         "Mở và đóng TwodayNote từ bất kỳ app nào.": "Open and close TwodayNote from any app.",
-        "Hiện số việc còn lại trên thanh menu": "Show tasks left in the menu bar",
         "Chuyển việc chưa xong sang hôm nay": "Move unfinished tasks to today",
         "Task chưa tick của những ngày trước tự lên đầu danh sách hôm nay.": "Unchecked tasks from earlier days go to the top of today.",
         "Phím tắt và gõ nhanh": "Shortcuts and typing",
@@ -275,12 +274,7 @@ public enum Strings {
         "Tắt để dùng giao diện cổ điển, như trước macOS 26.": "Turn off for the classic look from before macOS 26.",
         "Mở lại": "Relaunch",
         "Mở lại TwodayNote để áp dụng": "Relaunch TwodayNote to apply",
-        "Xem trước màu nhấn": "Accent color preview",
         "Hôm nay": "Today",
         "Ngày mai": "Tomorrow",
-        "còn 1": "1 left",
-        "Chọn màu nhấn": "Pick an accent color",
-        "Gửi bản build đầu tiên": "Send the first build",
-        "Thêm task": "Add task",
     ]
 }

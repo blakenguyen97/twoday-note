@@ -22,7 +22,6 @@ struct SettingsView: View {
 
 struct GeneralSettings: View {
     @AppStorage(Prefs.carryOverKey) private var carryOver = true
-    @AppStorage(Prefs.showCountKey) private var showCount = true
     @AppStorage(Prefs.hotKeyKey) private var hotKey = true
     @AppStorage(Lang.key) private var language = Lang.vi.rawValue
     // State as a stored property: the @State macro needs Xcode (see CLAUDE.md).
@@ -64,7 +63,6 @@ struct GeneralSettings: View {
                 Text(L("Phím tắt toàn cục ⌃⌥N"))
                 Text(L("Mở và đóng TwodayNote từ bất kỳ app nào."))
             }
-            Toggle(L("Hiện số việc còn lại trên thanh menu"), isOn: $showCount)
             Toggle(isOn: $carryOver) {
                 Text(L("Chuyển việc chưa xong sang hôm nay"))
                 Text(L("Task chưa tick của những ngày trước tự lên đầu danh sách hôm nay."))

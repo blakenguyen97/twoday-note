@@ -142,7 +142,7 @@ enum GuidePage: Int, CaseIterable, Identifiable {
         case .welcome:
             L("Việc, ghi chú và ý tưởng cho hôm nay và ngày mai, ngay trên thanh menu. Bấm vào icon, hoặc nhấn ⌃⌥N ở bất kỳ app nào.")
         case .typing:
-            L("Mỗi dòng thành một khối, mặc định là task. Gõ # ở đầu dòng để có tiêu đề, - ghi chú, * ý tưởng.")
+            L("Mỗi dòng thành một khối ở trên cùng, mặc định là task; kéo thả để xếp lại. Gõ # ở đầu dòng để có tiêu đề, - ghi chú, * ý tưởng.")
         case .tabs:
             L("Ghi trước cho ngày mai, hoặc cất link, đoạn trích, ảnh chụp màn hình vào Xem sau để xem khi rảnh. Chuyển nhanh bằng ⌘1 ⌘2 ⌘3.")
         case .finish:
@@ -558,7 +558,8 @@ private struct TypingDemo: View {
     }
 
     private static var lines: [String] {
-        [L("# Dự án mới"), L("Gửi bản thiết kế"), L("- Họp lúc 3 giờ chiều"), L("* Thêm chế độ tối")]
+        // Typed bottom line first: each new block goes on top, so the heading ends up first.
+        [L("* Thêm chế độ tối"), L("- Họp lúc 3 giờ chiều"), L("Gửi bản thiết kế"), L("# Dự án mới")]
     }
 
     private static func block(_ index: Int) -> DemoBlock {
@@ -606,7 +607,7 @@ private struct TypingDemo: View {
     private func play() async {
         guard active, !reduceMotion, !Guide.isStill else {
             typed.wrappedValue = ""
-            blocks.wrappedValue = Self.lines.indices.map(Self.block)
+            blocks.wrappedValue = Self.lines.indices.reversed().map(Self.block)
             return
         }
         while !Task.isCancelled {
@@ -625,7 +626,7 @@ private struct TypingDemo: View {
                     returnDown.wrappedValue = false
                     withAnimation(Motion.change) {
                         typed.wrappedValue = ""
-                        blocks.wrappedValue.append(Self.block(index))
+                        blocks.wrappedValue.insert(Self.block(index), at: 0)
                     }
                     try await Task.sleep(for: Motion.beat)
                 }
@@ -664,11 +665,8 @@ private struct TabsDemo: View {
                 Text(tab == AppModel.laterTab ? L("Xem sau") : Day.long(Day.adding(tab, to: model.today)))
                     .font(.headline)
                     .contentTransition(.opacity)
-                Picker(L("Ngày"), selection: .constant(tab)) {
-                    ForEach(0...AppModel.laterTab, id: \.self) { Text(model.label(offset: $0)).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                FillSegments(title: L("Ngày"), labels: (0...AppModel.laterTab).map(model.label(offset:)),
+                             selection: .constant(tab))
                 VStack(alignment: .leading, spacing: Space.xs) {
                     ForEach(blocks(tab)) { DemoRow(block: $0) }
                 }

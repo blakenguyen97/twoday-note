@@ -54,6 +54,8 @@ enum SeedData {
             preview.checked = true
             book.setPreview(preview, for: video.id)
         }
+        // Shown in the order written here: new blocks would go on top.
+        for i in book.entries.indices { book.entries[i].order = Double(i) }
         model.replace(book)
         model.refreshDay()
     }

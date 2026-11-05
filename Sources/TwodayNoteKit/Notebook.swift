@@ -98,21 +98,34 @@ public struct Notebook: Codable, Sendable {
 
     // MARK: Changing
 
-    /// Adds what people typed, and any pasted images, to the end of `day`,
+    /// Adds what people typed, and any pasted images, to the top of `day`,
     /// or of the Xem sau list when `later` (then `day` is the day it was saved).
+    /// People drag it where it belongs from there.
     /// Nil when there is neither text nor an image.
     @discardableResult
     public mutating func add(_ raw: String, defaultKind: EntryKind, day: Date, images: [String] = [], later: Bool = false) -> Entry? {
         guard let parsed = EntryInput.parse(raw, defaultKind: defaultKind, allowEmpty: !images.isEmpty) else { return nil }
         let list = later ? laterEntries : entries(on: day)
         var entry = Entry(text: parsed.text, kind: parsed.kind, day: day,
-                          order: (list.last?.order ?? -1) + 1, images: images, isLater: later)
-        if later { entry.order = laterOrder(for: entry) }
+                          order: (list.first?.order ?? 1) - 1, images: images, isLater: later)
+        if later { entry.order = addedLaterOrder(for: entry) }
         entries.append(entry)
         return entry
     }
 
-    /// Where a block lands on Xem sau: a link under its site's heading,
+    /// Where a new block lands on Xem sau: a link at the top of its site's
+    /// section, a heading named after a site at the end with the other
+    /// sections, anything else at the top.
+    private mutating func addedLaterOrder(for entry: Entry) -> Double {
+        if entry.kind != .heading, let site = entry.link?.site { return orderUnderHeading(site, day: entry.day) }
+        let list = laterEntries
+        if entry.kind == .heading, LinkSite.allCases.contains(where: { Self.matches(entry.text, $0.heading) }) {
+            return (list.last?.order ?? -1) + 1
+        }
+        return (list.first?.order ?? 1) - 1
+    }
+
+    /// Where a block moved to Xem sau lands: a link under its site's heading,
     /// anything else above the GitHub and YouTube sections at the end, or
     /// at the end when there are none.
     private mutating func laterOrder(for entry: Entry) -> Double {
@@ -130,7 +143,7 @@ public struct Notebook: Codable, Sendable {
         return first == 0 ? list[0].order - 1 : (list[first - 1].order + list[first].order) / 2
     }
 
-    /// On Xem sau, a GitHub or YouTube link goes at the end of the section
+    /// On Xem sau, a GitHub or YouTube link goes at the top of the section
     /// under its site's heading. Adds the heading at the end of the list
     /// when there is none. Returns the order for the new block.
     private mutating func orderUnderHeading(_ site: LinkSite, day: Date) -> Double {
@@ -141,10 +154,9 @@ public struct Notebook: Codable, Sendable {
             entries.append(heading)
             return heading.order + 1
         }
-        let next = list[(top + 1)...].firstIndex { $0.kind == .heading }
-        guard let next else { return (list.last?.order ?? list[top].order) + 1 }
-        // Between the section's last block and the next heading.
-        return (list[next - 1].order + list[next].order) / 2
+        // Right under the heading, above the section's other links.
+        guard top + 1 < list.count else { return list[top].order + 1 }
+        return (list[top].order + list[top + 1].order) / 2
     }
 
     private static func matches(_ text: String, _ heading: String) -> Bool {

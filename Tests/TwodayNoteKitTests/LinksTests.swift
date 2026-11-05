@@ -58,10 +58,11 @@ func groupsLinks() {
     book.add("https://github.com/apple/swift", defaultKind: .note, day: day, later: true)
     book.add("Ghi chú cuối", defaultKind: .note, day: day, later: true)
     book.add("https://www.youtube.com/watch?v=aqz-KE-bpKQ", defaultKind: .note, day: day, later: true)
+    // New blocks go on top: notes at the top of the list, links at the top of their section.
     #expect(book.laterEntries.map(\.text) == [
-        "Một bài viết", "Ghi chú cuối",
-        "GitHub", "https://github.com/github/spec-kit", "https://github.com/apple/swift",
-        "YouTube", "https://youtu.be/dQw4w9WgXcQ", "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+        "Ghi chú cuối", "Một bài viết",
+        "GitHub", "https://github.com/apple/swift", "https://github.com/github/spec-kit",
+        "YouTube", "https://www.youtube.com/watch?v=aqz-KE-bpKQ", "https://youtu.be/dQw4w9WgXcQ",
     ])
     #expect(book.laterEntries.filter { $0.kind == .heading }.count == 2)
 }
@@ -74,7 +75,7 @@ func plainAboveSites() {
     book.add("Bài hay", defaultKind: .note, day: .now, later: true)
     let task = book.add("Việc nhỏ", defaultKind: .task, day: .now)!
     book.moveToLater(task.id)
-    #expect(book.laterEntries.map(\.text) == ["Đọc", "Bài hay", "Việc nhỏ", "GitHub", "https://github.com/a/b"])
+    #expect(book.laterEntries.map(\.text) == ["Bài hay", "Đọc", "Việc nhỏ", "GitHub", "https://github.com/a/b"])
 }
 
 @Test("A heading people wrote themselves is used, whatever its case")

@@ -35,7 +35,7 @@
 - **Count in the icon.** The menu bar icon shows how many tasks are left today, and goes blank when you're done.
 - **Focus timer.** A 15, 25, 45, or 60 minute countdown at the bottom of the popover. The time left runs next to the menu bar icon, and a sound plays when it's over.
 - **Updates itself.** Once a day it checks GitHub for a newer release; one click downloads it, swaps it in, and opens it again. The version is in Settings.
-- **Settings.** Language, launch at login, global shortcut, menu bar count, carry-over, light or dark mode, Liquid Glass on or off (off gives the classic look from before macOS 26), and accent color.
+- **Settings.** Language, launch at login, global shortcut, carry-over, light or dark mode, Liquid Glass on or off (off gives the classic look from before macOS 26), and accent color.
 
 The interface is in Vietnamese or English (Settings > Chung > Ngôn ngữ).
 

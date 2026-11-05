@@ -29,10 +29,10 @@ enum SelfTest {
             model.dayOffset = 0
 
             check("Return adds a task to today", model.add("Mua sữa") && model.visible.count == 1)
-            check("“# ” makes a heading", model.add("# Buổi chiều") && model.visible.last?.kind == .heading)
+            check("“# ” makes a heading, and a new block goes on top", model.add("# Buổi chiều") && model.visible.first?.kind == .heading)
             check("an empty line adds nothing", !model.add("   ") && model.visible.count == 2)
 
-            let task = model.visible[0]
+            let task = model.visible.first { $0.kind == .task }!
             model.toggleDone(task.id)
             check("the checkbox marks a task done", model.todayCounts == (0, 1))
 
@@ -68,7 +68,7 @@ enum SelfTest {
             check("Xem sau keeps the day's kind apart", model.newKind == .task)
             check("a Xem sau block is on no day", !model.visible.contains { $0.id == saved.id })
             _ = model.add("Việc để sau")
-            let later = model.visible.last!
+            let later = model.visible.first!
             model.moveToLater(later.id)
             check("Dời sang > Xem sau takes a block off today", !model.visible.contains { $0.id == later.id })
             model.dayOffset = AppModel.laterTab
@@ -93,9 +93,9 @@ enum SelfTest {
                   model.add("https://youtu.be/dQw4w9WgXcQ") && model.visible.map(\.text).suffix(2) == ["YouTube", "https://youtu.be/dQw4w9WgXcQ"])
             _ = model.add("https://github.com/apple/swift")
             _ = model.add("Ghi chú thường")
-            check("a second GitHub link joins its section, a plain note stays above",
-                  model.visible.map(\.text) == ["Đọc khi rảnh", "Ghi chú thường", "GitHub", "https://github.com/github/spec-kit",
-                                                "https://github.com/apple/swift", "YouTube", "https://youtu.be/dQw4w9WgXcQ"],
+            check("a second GitHub link goes to the top of its section, a plain note to the top",
+                  model.visible.map(\.text) == ["Ghi chú thường", "Đọc khi rảnh", "GitHub", "https://github.com/apple/swift",
+                                                "https://github.com/github/spec-kit", "YouTube", "https://youtu.be/dQw4w9WgXcQ"],
                   model.visible.map(\.text).joined(separator: " | "))
             let video = model.visible.last!
             var preview = video.link!
@@ -119,8 +119,8 @@ enum SelfTest {
             board.clearContents()
             board.setData(SampleImage.png(), forType: .png)
             check("⌘V with an image waits in the add field", model.pasteImages(from: board) && model.pendingImages.count == 1)
-            check("Return adds a block made of only an image", model.add("") && model.visible.last?.images.count == 1)
-            let shot = model.visible.last!
+            check("Return adds a block made of only an image", model.add("") && model.visible.first?.images.count == 1)
+            let shot = model.visible.first!
             let file = ImageStore.url(shot.images[0])
             check("the image is saved as a file", FileManager.default.fileExists(atPath: file.path))
             model.editingID = shot.id
@@ -171,7 +171,7 @@ enum SelfTest {
             board.setData(SampleImage.png(), forType: .png)
             _ = model.pasteImages(from: board)
             _ = model.add("Ảnh để phóng to")
-            let zoomed = model.visible.last!
+            let zoomed = model.visible.first!
             model.viewer = ImageViewer(entryID: zoomed.id, name: zoomed.images[0])
             try? await Task.sleep(for: .seconds(0.5))
             let zoomView = ZoomScrollView.find(in: app.popoverWindow?.contentView)

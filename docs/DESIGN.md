@@ -12,7 +12,8 @@ nơi duy nhất để gõ, nên ô nhập được focus ngay khi mở.
 ## Information architecture
 
 Một trang, hai ngày: **Hôm nay · Ngày mai**, và **Xem sau**, chọn bằng
-segmented control. Mỗi ngày là một danh sách khối (block):
+segmented control dài bằng ô nhập (ba nút chia đều). Mỗi ngày là một danh
+sách khối (block). Khối mới nằm trên cùng danh sách; kéo thả để xếp lại:
 
 | Loại | Hiển thị | Gõ nhanh |
 | --- | --- | --- |
@@ -36,9 +37,9 @@ ngày nào, không có hạn, không bao giờ tự chuyển sang hôm nay. Kh�
 mặc định là Ghi chú (ngày vẫn mặc định Task), và ghi ngày lưu ("5/11") ở bên
 phải. Dời qua lại bằng menu chuột phải > Dời sang.
 
-Dán link GitHub hoặc YouTube vào Xem sau thì khối tự vào dưới tiêu đề
-"GitHub" hoặc "YouTube" (chưa có thì tự tạo, ở cuối danh sách; ghi chú thường
-nằm phía trên các mục này). Khối link hiện thẻ thay cho chữ: repo GitHub có tên,
+Dán link GitHub hoặc YouTube vào Xem sau thì khối tự vào ngay dưới tiêu đề
+"GitHub" hoặc "YouTube", trên các link cũ (chưa có tiêu đề thì tự tạo, ở cuối
+danh sách; ghi chú mới nằm trên cùng, phía trên các mục này). Khối link hiện thẻ thay cho chữ: repo GitHub có tên,
 nhãn Repo, owner/repo, số sao, ngôn ngữ, mô tả và topic; video YouTube có
 thumbnail ở đầu, tiêu đề và kênh. Thông tin lấy từ API công khai của GitHub
 và oEmbed của YouTube (không cần key), lưu cùng khối nên vẫn hiện khi offline;
@@ -112,6 +113,8 @@ Cài đặt > Giao diện > Liquid Glass: tắt thì app dùng giao diện cổ 
 trước macOS 26 (popover, tab, nút, menu), và thanh Hoàn tác là thanh thường
 thay vì kính. macOS chọn giao diện lúc app mở (khoá
 UIDesignRequiresCompatibility), nên đổi xong có nút "Mở lại" ngay dưới.
+
+Số việc còn lại hôm nay luôn hiện trong icon thanh menu (không có công tắc).
 
 ## Focus
 

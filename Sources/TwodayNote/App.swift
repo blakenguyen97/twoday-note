@@ -171,7 +171,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private func updateStatusTitle() {
         let remaining = model.todayCounts.remaining
         // The count sits inside the icon's front card; none when all is done.
-        let shown = Prefs.showCount ? remaining : 0
+        let shown = remaining
         if shown != shownCount {
             shownCount = shown
             statusItem?.button?.image = StatusIcon.make(count: shown)

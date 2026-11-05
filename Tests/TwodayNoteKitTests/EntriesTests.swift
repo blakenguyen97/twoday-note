@@ -71,12 +71,12 @@ func summary() {
 struct NotebookTests {
     let today = Day.start(of: .now)
 
-    @Test func addsToTheEndOfADay() {
+    @Test func addsToTheTopOfADay() {
         var book = Notebook()
         let first = book.add("Mua sữa", defaultKind: .task, day: today)
         let second = book.add("# Buổi chiều", defaultKind: .task, day: today)
         #expect(book.add("   ", defaultKind: .task, day: today) == nil)
-        #expect(book.entries(on: today).map(\.id) == [first!.id, second!.id])
+        #expect(book.entries(on: today).map(\.id) == [second!.id, first!.id])
         #expect(second?.kind == .heading)
         #expect(second?.text == "Buổi chiều")
     }
@@ -107,10 +107,12 @@ struct NotebookTests {
         let a = book.add("A", defaultKind: .task, day: today)!
         let b = book.add("B", defaultKind: .task, day: today)!
         let c = book.add("C", defaultKind: .task, day: today)!
+        // New blocks go on top: C, B, A.
+        #expect(book.entries(on: today).map(\.id) == [c.id, b.id, a.id])
         book.reorder(on: today, from: [2], to: 0)
-        #expect(book.entries(on: today).map(\.id) == [c.id, a.id, b.id])
+        #expect(book.entries(on: today).map(\.id) == [a.id, c.id, b.id])
         book.reorder(on: today, from: [0], to: 3)
-        #expect(book.entries(on: today).map(\.id) == [a.id, b.id, c.id])
+        #expect(book.entries(on: today).map(\.id) == [c.id, b.id, a.id])
     }
 
     @Test func carriesUnfinishedTasksToTheTop() {
@@ -124,7 +126,7 @@ struct NotebookTests {
         #expect(book.rollOver(today: today) == 1)
         #expect(book.entries(on: today).map(\.id) == [old.id, fresh.id])
         #expect(book.entries(on: today).first?.carriedFrom == yesterday)
-        #expect(book.entries(on: yesterday).map(\.id) == [done.id, idea.id])
+        #expect(book.entries(on: yesterday).map(\.id) == [idea.id, done.id])
         #expect(book.rollOver(today: today) == 0)
     }
 
@@ -192,12 +194,12 @@ struct NotebookTests {
         let task = book.add("Đọc thử thư viện mới", defaultKind: .task, day: yesterday, later: true)!
         #expect(book.entries(on: today).isEmpty)
         #expect(book.counts(on: yesterday) == (0, 0))
-        #expect(book.laterEntries.map(\.id) == [link.id, task.id])
+        #expect(book.laterEntries.map(\.id) == [task.id, link.id])
         // A task on Xem sau has no day to be late for.
         #expect(book.rollOver(today: today) == 0)
         #expect(book.laterEntries.count == 2)
         book.reorderLater(from: [1], to: 0)
-        #expect(book.laterEntries.map(\.id) == [task.id, link.id])
+        #expect(book.laterEntries.map(\.id) == [link.id, task.id])
     }
 
     @Test func movesBetweenADayAndLater() {

@@ -83,13 +83,9 @@ private struct DayHeader: View {
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
             }
-            Picker(L("Ngày"), selection: $model.dayOffset) {
-                ForEach(0...AppModel.laterTab, id: \.self) { offset in
-                    Text(model.label(offset: offset)).tag(offset)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            // As wide as the add field under it.
+            FillSegments(title: L("Ngày"), labels: (0...AppModel.laterTab).map(model.label(offset:)),
+                         selection: $model.dayOffset)
         }
     }
 }

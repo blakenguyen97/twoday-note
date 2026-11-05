@@ -305,14 +305,12 @@ struct UndoNotice: Identifiable {
 enum Prefs {
     static let focusMinutesKey = "focusMinutes"
     static let carryOverKey = "carryOver"
-    static let showCountKey = "showCountInMenuBar"
     static let hotKeyKey = "globalHotKey"
     static let appearanceKey = "appearance.mode"
     /// Set once the guide was finished or closed, so it opens by itself only once.
     static let guideSeenKey = "guide.seen"
 
     static var carryOver: Bool { UserDefaults.standard.object(forKey: carryOverKey) as? Bool ?? true }
-    static var showCount: Bool { UserDefaults.standard.object(forKey: showCountKey) as? Bool ?? true }
     static var hotKey: Bool { UserDefaults.standard.object(forKey: hotKeyKey) as? Bool ?? true }
     static var guideSeen: Bool { UserDefaults.standard.bool(forKey: guideSeenKey) }
     static var focusMinutes: Int { UserDefaults.standard.object(forKey: focusMinutesKey) as? Int ?? 25 }
