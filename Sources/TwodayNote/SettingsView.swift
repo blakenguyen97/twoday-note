@@ -1,64 +1,91 @@
 import SwiftUI
+import TwodayNoteKit
 
-/// The Settings window (Command-Comma). One tab per topic, at most about
-/// six. Each tab is a grouped Form that sizes to its content, so the
-/// window grows to fit and shows no scroll bar it does not need.
+/// The Settings window (⌘, or ••• > Cài đặt…). A menu bar app has few
+/// settings, so they fit one grouped Form that sizes to its content.
 struct SettingsView: View {
-    @Environment(AppModel.self) private var model
-
     var body: some View {
-        @Bindable var model = model
-        TabView(selection: $model.settingsTab) {
-            ForEach(SettingsTab.allCases) { tab in
-                page(tab)
-                    .tabItem { Label(tab.title, systemImage: tab.symbol) }
-                    .tag(tab)
-            }
-        }
-        .noInitialFocus()
-    }
-
-    @ViewBuilder
-    private func page(_ tab: SettingsTab) -> some View {
         Form {
-            switch tab {
-            case .general: GeneralSettings()
-            case .appearance: AppearanceSettings()
-            }
+            GeneralSettings()
+            ShortcutList()
+            AppearanceSettings()
         }
         .formStyle(.grouped)
-        .fitsContent()
-        .frame(width: 520)
-    }
-}
-
-/// The Settings tabs. Snapshot mode walks through every case.
-enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, appearance
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .general: "General"
-        case .appearance: "Appearance"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .general: "gearshape"
-        case .appearance: "paintpalette"
-        }
+        // Three short sections fit on a laptop screen without scrolling.
+        .fitsContent(max: 840)
+        .frame(width: 480)
+        .noInitialFocus()
     }
 }
 
 struct GeneralSettings: View {
-    @AppStorage("confirmDelete") private var confirmDelete = true
+    @AppStorage(Prefs.carryOverKey) private var carryOver = true
+    @AppStorage(Prefs.showCountKey) private var showCount = true
+    @AppStorage(Prefs.hotKeyKey) private var hotKey = true
+    // State as a stored property: the @State macro needs Xcode (see CLAUDE.md).
+    private let launchState = State(initialValue: LaunchAtLogin.isEnabled)
+    private let errorState = State<String?>(initialValue: nil)
+
+    private var launchAtLogin: Bool {
+        get { launchState.wrappedValue }
+        nonmutating set { launchState.wrappedValue = newValue }
+    }
+
+    private var loginError: String? {
+        get { errorState.wrappedValue }
+        nonmutating set { errorState.wrappedValue = newValue }
+    }
 
     var body: some View {
-        Section("Items") {
-            Toggle("Ask before deleting items", isOn: $confirmDelete)
+        Section("Chung") {
+            Toggle(isOn: launchState.projectedValue) {
+                Text("Mở cùng macOS")
+                if let loginError {
+                    Text(loginError).foregroundStyle(.red)
+                }
+            }
+            .onChange(of: launchAtLogin) { _, on in
+                do {
+                    try LaunchAtLogin.set(on)
+                    loginError = nil
+                } catch {
+                    loginError = "Không bật được: \(error.localizedDescription)"
+                    launchAtLogin = LaunchAtLogin.isEnabled
+                }
+            }
+            Toggle(isOn: $hotKey) {
+                Text("Phím tắt toàn cục ⌃⌥N")
+                Text("Mở và đóng TwodayNote từ bất kỳ app nào.")
+            }
+            Toggle("Hiện số việc còn lại trên thanh menu", isOn: $showCount)
+            Toggle(isOn: $carryOver) {
+                Text("Chuyển việc chưa xong sang hôm nay")
+                Text("Task chưa tick của những ngày trước tự lên đầu danh sách hôm nay.")
+            }
+        }
+    }
+}
+
+/// Teaches the shortcuts and typing prefixes (mac-design: keyboard first).
+private struct ShortcutList: View {
+    var body: some View {
+        Section("Phím tắt và gõ nhanh") {
+            row("Mở / đóng TwodayNote", "⌃⌥N")
+            row("Hôm nay · Ngày mai · Ngày kia", "⌘1 ⌘2 ⌘3")
+            row("Thêm khối", "Return")
+            row("Đóng", "Esc")
+            LabeledContent("Gõ ở đầu dòng") {
+                Text("# tiêu đề  - ghi chú  * ý tưởng  [] task")
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func row(_ title: String, _ keys: String) -> some View {
+        LabeledContent(title) {
+            Text(keys)
+                .font(.body.monospaced())
+                .foregroundStyle(.secondary)
         }
     }
 }

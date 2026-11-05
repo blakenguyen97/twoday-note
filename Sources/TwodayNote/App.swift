@@ -1,86 +1,195 @@
 import AppKit
-import SwiftData
+import ServiceManagement
 import SwiftUI
+import TwodayNoteKit
 
-// TwodayNote
+// TwodayNote: a menu bar app. No Dock icon, no main window (LSUIElement).
 //   TwodayNote                      the app
-//   APP_STORE=<file> TwodayNote     use another database (tests, experiments)
-//   APP_SNAPSHOT=<dir> TwodayNote   save a PNG of every sidebar page and Settings tab in light and dark mode, then quit
-//   APP_SEED=1 TwodayNote           fill an empty /tmp store with sample items (tools/snap.sh)
+//   APP_STORE=<file> TwodayNote     use another notes file (tests, experiments)
+//   APP_SNAPSHOT=<dir> TwodayNote   save a PNG of each day and Settings in light and dark, then quit
+//   APP_SEED=1 TwodayNote           fill an empty /tmp store with sample blocks (tools/snap.sh)
 //   TwodayNote --selftest           run the self-test on a /tmp store and quit with 0 or 1 (tools/selftest.sh)
 //   APP_ACCENT=<id> TwodayNote      run with another accent from Theme.all (UI/Theme.swift)
-//   APP_GRID=1 TwodayNote           draw the 8 pt grid and the layout probes over the window
+//   APP_GRID=1 TwodayNote           draw the 8 pt grid and the layout probes over the popover
 
 @main
-struct TwodayNoteApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @State private var model = AppModel(container: Store.makeContainer())
-
-    var body: some Scene {
-        Window("TwodayNote", id: "main") {
-            ContentView()
-                .environment(model)
-                .themed()
-                .overlay { if GridOverlay.enabled { GridOverlay() } }
-                .frame(minWidth: 760, minHeight: 480)
-        }
-        .modelContainer(model.container)
-        .defaultSize(width: 1100, height: 720)
-        .windowToolbarStyle(.unified)
-        .commands {
-            SidebarCommands()
-            ToolbarCommands()
-            CommandGroup(replacing: .newItem) {
-                Button("New Item") { model.addItem() }
-                    .keyboardShortcut("n")
-            }
-        }
-
-        Settings {
-            SettingsView()
-                .environment(model)
-                .themed()
-        }
-        .windowResizability(.contentSize)
+enum TwodayNoteMain {
+    static func main() {
+        let app = NSApplication.shared
+        app.delegate = AppDelegate.shared
+        app.run()
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
+    static let shared = AppDelegate()
+
+    let model = AppModel()
+    private var statusItem: NSStatusItem?
+    let popover = NSPopover()
+    private var hotKey: HotKey?
+    private var settingsWindow: NSWindow?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Started from a terminal, the process is not a foreground app yet.
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate()
+        NSApp.setActivationPolicy(.accessory)
+        NSApp.mainMenu = MainMenu.make()
+
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        item.button?.image = NSImage(systemSymbolName: "checklist", accessibilityDescription: "TwodayNote")
+        item.button?.imagePosition = .imageLeading
+        item.button?.target = self
+        item.button?.action = #selector(togglePopover(_:))
+        item.button?.toolTip = "TwodayNote (⌃⌥N)"
+        statusItem = item
+
+        let content = NotesView()
+            .environment(model)
+            .themed()
+            .overlay { if GridOverlay.enabled { GridOverlay() } }
+        let host = NSHostingController(rootView: content)
+        host.sizingOptions = [.preferredContentSize]
+        popover.contentViewController = host
+        popover.behavior = .transient
+        popover.animates = true
+        popover.delegate = self
+
+        model.onChange = { [weak self] in self?.updateStatusTitle() }
+        model.refreshDay()
+        updateStatusTitle()
+        applyPrefs()
+
+        NotificationCenter.default.addObserver(self, selector: #selector(dayChanged),
+                                               name: .NSCalendarDayChanged, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(prefsChanged),
+                                               name: UserDefaults.didChangeNotification, object: nil)
+
+        SeedData.insertIfRequested(into: model)
+        SelfTest.runIfRequested(model: model)
+        Snapshot.runIfRequested(app: self)
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
-
-    /// The self-test's result becomes the exit code, after a normal quit.
     func applicationWillTerminate(_ notification: Notification) {
+        model.flush()
         if SelfTest.requested { exit(SelfTest.exitCode) }
     }
+
+    // MARK: Popover
+
+    @objc func togglePopover(_ sender: Any?) {
+        popover.isShown ? closePopover() : showPopover()
+    }
+
+    func showPopover() {
+        guard let button = statusItem?.button else { return }
+        model.refreshDay()
+        model.dayOffset = 0
+        NSApp.activate()
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
+        model.focusTick += 1
+    }
+
+    func closePopover() {
+        popover.performClose(nil)
+    }
+
+    var popoverWindow: NSWindow? { popover.contentViewController?.view.window }
+
+    func popoverDidClose(_ notification: Notification) {
+        model.undo = nil
+        model.flush()
+    }
+
+    // MARK: Settings
+
+    @objc func showSettings(_ sender: Any?) {
+        if settingsWindow == nil {
+            let host = NSHostingController(rootView: SettingsView().environment(model).themed())
+            host.sizingOptions = [.preferredContentSize]
+            let window = NSWindow(contentViewController: host)
+            window.title = "Cài đặt TwodayNote"
+            window.styleMask = [.titled, .closable]
+            window.isReleasedWhenClosed = false
+            window.center()
+            settingsWindow = window
+        }
+        closePopover()
+        NSApp.activate()
+        settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    var settings: NSWindow? { settingsWindow }
+
+    // MARK: Menu bar title, preferences, day changes
+
+    private func updateStatusTitle() {
+        let remaining = model.todayCounts.remaining
+        statusItem?.button?.title = Prefs.showCount && remaining > 0 ? " \(remaining)" : ""
+        statusItem?.button?.setAccessibilityValue(Progress.summary(remaining: remaining, done: model.todayCounts.done))
+    }
+
+    @objc private func dayChanged() {
+        model.refreshDay()
+        updateStatusTitle()
+    }
+
+    @objc private func prefsChanged() {
+        applyPrefs()
+    }
+
+    private func applyPrefs() {
+        updateStatusTitle()
+        if Prefs.hotKey, hotKey == nil, !Store.isOverridden {
+            // ⌃⌥N opens and closes the popover from any app.
+            hotKey = HotKey(keyCode: HotKey.keyN, modifiers: HotKey.controlOption) { [weak self] in
+                self?.togglePopover(nil)
+            }
+        } else if !Prefs.hotKey, let current = hotKey {
+            current.unregister()
+            hotKey = nil
+        }
+    }
 }
 
-/// Where the data lives: ~/Library/Application Support/TwodayNote/TwodayNote.store
-enum Store {
-    /// True when APP_STORE points somewhere else (tests, snapshots, seed data).
-    static var isOverridden: Bool {
-        !(ProcessInfo.processInfo.environment["APP_STORE"] ?? "").isEmpty
-    }
+/// The app menu is never visible (no Dock icon), but its shortcuts still
+/// work while the popover is open: Edit gives text fields ⌘C, ⌘V, ⌘Z.
+enum MainMenu {
+    static func make() -> NSMenu {
+        let main = NSMenu()
 
-    static var url: URL {
-        if let path = ProcessInfo.processInfo.environment["APP_STORE"], !path.isEmpty {
-            return URL(fileURLWithPath: path)
-        }
-        let dir = URL.applicationSupportDirectory.appending(path: "TwodayNote", directoryHint: .isDirectory)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appending(path: "TwodayNote.store")
-    }
+        let app = NSMenu(title: "TwodayNote")
+        app.addItem(withTitle: "Cài đặt…", action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
+        app.addItem(.separator())
+        app.addItem(withTitle: "Thoát TwodayNote", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        main.addItem(submenu: app)
 
-    static func makeContainer() -> ModelContainer {
-        do {
-            return try ModelContainer(for: Item.self, configurations: ModelConfiguration(url: url))
-        } catch {
-            fatalError("Could not open the database at \(url.path): \(error)")
-        }
+        let edit = NSMenu(title: "Sửa")
+        edit.addItem(withTitle: "Hoàn tác", action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: "Làm lại", action: Selector(("redo:")), keyEquivalent: "Z")
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "Cắt", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Sao chép", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Dán", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Chọn tất cả", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        main.addItem(submenu: edit)
+        return main
+    }
+}
+
+private extension NSMenu {
+    func addItem(submenu: NSMenu) {
+        let item = NSMenuItem(title: submenu.title, action: nil, keyEquivalent: "")
+        item.submenu = submenu
+        addItem(item)
+    }
+}
+
+/// Settings > Mở cùng macOS. Only works from the installed, signed app.
+enum LaunchAtLogin {
+    static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
+
+    static func set(_ on: Bool) throws {
+        guard !Store.isOverridden else { return }
+        if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
     }
 }

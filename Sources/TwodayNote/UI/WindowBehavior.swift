@@ -20,7 +20,8 @@ extension View {
 
 private struct FitsContent: ViewModifier {
     var max: CGFloat
-    @State private var height: CGFloat?
+    // State as a stored property: the @State macro needs Xcode (see CLAUDE.md).
+    private let height = State<CGFloat?>(initialValue: nil)
 
     func body(content: Content) -> some View {
         content
@@ -29,9 +30,9 @@ private struct FitsContent: ViewModifier {
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentSize.height.rounded(.up)
             } action: { _, new in
-                if abs(new - (height ?? 0)) >= 1 { height = new }
+                if abs(new - (height.wrappedValue ?? 0)) >= 1 { height.wrappedValue = new }
             }
-            .frame(height: height.map { min($0, max) })
+            .frame(height: height.wrappedValue.map { min($0, max) })
             .scrollBounceBehavior(.basedOnSize)
     }
 }

@@ -1,12 +1,10 @@
 import AppKit
-import SwiftData
 import TwodayNoteKit
 
 /// Self-test for agents: runs the app's real functions on a test store,
 /// prints PASS or FAIL per check, and quits with exit code 0 or 1.
-///   APP_STORE=/tmp/TwodayNote-self.store ~/Applications/TwodayNote.app/Contents/MacOS/TwodayNote --selftest
+///   APP_STORE=/tmp/TwodayNote-self.json ~/Applications/TwodayNote.app/Contents/MacOS/TwodayNote --selftest
 /// (tools/selftest.sh does this.) Add a check for every story with logic.
-@MainActor
 enum SelfTest {
     static var requested: Bool { CommandLine.arguments.contains("--selftest") }
     /// Read by AppDelegate.applicationWillTerminate.
@@ -16,7 +14,6 @@ enum SelfTest {
 
     static func runIfRequested(model: AppModel) {
         guard requested else { return }
-        // Print each line at once, so a crash keeps the lines before it.
         setvbuf(stdout, nil, _IOLBF, 0)
         guard Store.isOverridden else {
             print("SELFTEST refused: set APP_STORE to a file in /tmp")
@@ -24,23 +21,56 @@ enum SelfTest {
             return
         }
         Task {
+            try? await Task.sleep(for: .seconds(0.3))
+            let app = AppDelegate.shared
+            model.replace(Notebook())
+            model.dayOffset = 0
+
+            check("Return adds a task to today", model.add("Mua sữa") && model.visible.count == 1)
+            check("“# ” makes a heading", model.add("# Buổi chiều") && model.visible.last?.kind == .heading)
+            check("an empty line adds nothing", !model.add("   ") && model.visible.count == 2)
+
+            let task = model.visible[0]
+            model.toggleDone(task.id)
+            check("the checkbox marks a task done", model.todayCounts == (0, 1))
+
+            model.dayOffset = 1
+            check("tomorrow starts empty", model.visible.isEmpty)
+            _ = model.add("Đặt vé xe")
+            let ticket = model.visible[0]
+            model.move(ticket.id, toOffset: 0)
+            model.dayOffset = 0
+            check("Dời sang moves a block to another day", model.visible.contains { $0.id == ticket.id })
+
+            model.delete(ticket.id)
+            check("Xoá removes the block", !model.visible.contains { $0.id == ticket.id })
+            model.undoRemoval()
+            check("Hoàn tác brings it back", model.visible.contains { $0.id == ticket.id })
+
+            model.clearDone()
+            check("Xoá việc đã xong removes only done tasks", model.todayCounts == (1, 0))
+
+            // Carry-over from yesterday.
+            var book = model.book
+            book.add("Việc hôm qua", defaultKind: .task, day: Day.adding(-1, to: .now))
+            model.replace(book)
+            model.refreshDay()
+            check("unfinished tasks from yesterday carry over", model.visible.first?.text == "Việc hôm qua")
+
+            model.flush()
+            check("the notes file reloads the same", Store.load().entries == model.book.entries)
+
+            app.showPopover()
             try? await Task.sleep(for: .seconds(0.5))
-            let context = model.container.mainContext
-            func items() -> [Item] { (try? context.fetch(FetchDescriptor<Item>())) ?? [] }
-
-            let before = items().count
-            model.addItem()
-            check("New Item adds one item", items().count == before + 1)
-            check("the new item is selected", model.selection != nil)
-
-            if let item = items().first(where: { $0.id == model.selection }) {
-                item.isStarred.toggle()
-                check("starring an item marks it starred", item.isStarred)
-                context.delete(item)
-                try? context.save()
-                check("deleting the item removes it", items().count == before)
+            check("the menu bar icon opens the popover", app.popover.isShown)
+            for _ in 1...10 {
+                app.closePopover()
+                try? await Task.sleep(for: .seconds(0.05))
+                app.showPopover()
+                try? await Task.sleep(for: .seconds(0.05))
             }
-            check("titles are cleaned", ItemTitle.clean("  Buy   milk ") == "Buy milk")
+            check("the popover opens and closes 10 times", app.popover.isShown)
+            app.closePopover()
 
             print(failures == 0 ? "SELFTEST PASS \(count) checks" : "SELFTEST FAIL \(failures) of \(count) checks")
             finish(code: failures == 0 ? 0 : 1)
@@ -53,8 +83,6 @@ enum SelfTest {
         print(ok ? "PASS \(name)" : "FAIL \(name)\(detail.isEmpty ? "" : ": \(detail)")")
     }
 
-    /// Quits through NSApp.terminate, never exit(), and closes sheets first:
-    /// an open sheet refuses terminate, and the run would wait forever.
     static func finish(code: Int32) {
         exitCode = code
         for window in NSApp.windows { if let sheet = window.attachedSheet { window.endSheet(sheet) } }

@@ -11,6 +11,13 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$repo/Resources"
 
+# actool ships with Xcode only. Without it, draw a flat .icns with iconutil.
+if ! xcrun -f actool >/dev/null 2>&1; then
+  rm -f "$repo/Resources/Assets.car"
+  swift "$here/icon_fallback.swift" "$icon" "$repo/Resources/AppIcon.icns"
+  exit $?
+fi
+
 # actool fails on a missing layer image, so it doubles as the validator.
 # The .icon must be named AppIcon.icon to match --app-icon, or actool
 # writes nothing and still exits 0. Check the output to catch that.

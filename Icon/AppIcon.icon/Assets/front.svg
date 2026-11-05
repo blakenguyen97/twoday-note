@@ -1,3 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect x="262" y="372" width="500" height="380" rx="72" fill="#FFFFFF"/>
+  <!-- Today: the card in front, with a check and two lines cut out. -->
+  <path fill="#FFFFFF" fill-rule="evenodd" d="
+    M328 292 H672 A76 76 0 0 1 748 368 V716 A76 76 0 0 1 672 792 H328 A76 76 0 0 1 252 716 V368 A76 76 0 0 1 328 292 Z
+    M332 444 L366 410 L410 454 L494 370 L528 404 L410 522 Z
+    M332 588 H668 A24 24 0 0 1 668 636 H332 A24 24 0 0 1 332 588 Z
+    M332 680 H580 A24 24 0 0 1 580 728 H332 A24 24 0 0 1 332 680 Z"/>
 </svg>

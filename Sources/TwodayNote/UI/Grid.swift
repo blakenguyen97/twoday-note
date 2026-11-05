@@ -85,7 +85,8 @@ private struct GridProbeModifier: ViewModifier {
     let area: String
     let edge: String?
     let inset: CGFloat
-    @State private var owner = UUID()
+    // State as a stored property: the @State macro needs Xcode (see CLAUDE.md).
+    private let owner = State(initialValue: UUID())
 
     func body(content: Content) -> some View {
         if GridProbes.enabled {
@@ -93,9 +94,9 @@ private struct GridProbeModifier: ViewModifier {
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
                     GridProbes.shared.update(.init(kind: kind, name: name, area: area, edge: edge, inset: inset,
                                                    x: frame.minX, y: frame.minY,
-                                                   width: frame.width, height: frame.height), owner: owner)
+                                                   width: frame.width, height: frame.height), owner: owner.wrappedValue)
                 }
-                .onDisappear { GridProbes.shared.remove(kind: kind, name: name, owner: owner) }
+                .onDisappear { GridProbes.shared.remove(kind: kind, name: name, owner: owner.wrappedValue) }
         } else {
             content
         }

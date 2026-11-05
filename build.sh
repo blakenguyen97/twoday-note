@@ -40,11 +40,14 @@ cp "$bin" "$app/Contents/MacOS/$name"
 sed -e "s/__BUILD__/$(date +%Y%m%d%H%M)/" "$here/Info.plist.in" > "$app/Contents/Info.plist"
 # The icon: Icon/AppIcon.icon -> Resources/Assets.car + AppIcon.icns, rebuilt when it changed.
 if [[ -d "$here/Icon/AppIcon.icon" ]]; then
-  car="$here/Resources/Assets.car"
-  if [[ ! -f "$car" || -n "$(find "$here/Icon/AppIcon.icon" -newer "$car" | head -1)" ]]; then
+  icns="$here/Resources/AppIcon.icns"
+  if [[ ! -f "$icns" || -n "$(find "$here/Icon/AppIcon.icon" -newer "$icns" | head -1)" ]]; then
     "$here/tools/make_icon.sh"
   fi
-  cp -X "$car" "$here/Resources/AppIcon.icns" "$app/Contents/Resources/"
+  # Assets.car exists only when actool (Xcode) built the icon.
+  for f in Assets.car AppIcon.icns; do
+    if [[ -f "$here/Resources/$f" ]]; then cp -X "$here/Resources/$f" "$app/Contents/Resources/"; fi
+  done
 fi
 xattr -cr "$app"
 codesign --force --sign "$identity" "$app" 2>&1 | grep -v "replacing existing signature" || true

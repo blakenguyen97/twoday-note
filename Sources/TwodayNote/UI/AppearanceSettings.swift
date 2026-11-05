@@ -5,10 +5,10 @@ struct AppearanceSettings: View {
     @Bindable private var store = ThemeStore.shared
 
     var body: some View {
-        Section {
+        Section("Giao diện") {
             AccentPreview()
                 .padding(.vertical, Space.xs)
-            LabeledContent("Accent color") {
+            LabeledContent("Màu nhấn") {
                 VStack(alignment: .trailing, spacing: Space.xs) {
                     HStack(spacing: Space.sm) {
                         ForEach(Theme.all) { theme in
@@ -44,7 +44,7 @@ private struct AccentPreview: View {
         .overlay(shape.strokeBorder(.separator, lineWidth: 1))
         .allowsHitTesting(false)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Preview of the accent color")
+        .accessibilityLabel("Xem trước màu nhấn")
     }
 
     private var sidebar: some View {
@@ -56,9 +56,9 @@ private struct AccentPreview: View {
             }
             .padding(.leading, Space.xs)
             .padding(.bottom, Space.sm)
-            sidebarRow("Inbox", symbol: "tray", selected: true)
-            sidebarRow("Today", symbol: "star", selected: false)
-            sidebarRow("Done", symbol: "checkmark.circle", selected: false)
+            sidebarRow("Hôm nay", symbol: "tray", selected: true)
+            sidebarRow("Ngày mai", symbol: "calendar", selected: false)
+            sidebarRow("Đã xong", symbol: "checkmark.circle", selected: false)
             Spacer(minLength: 0)
         }
         .padding(Space.sm)
@@ -79,24 +79,24 @@ private struct AccentPreview: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: Space.sm) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Inbox").font(.headline)
+                Text("Hôm nay").font(.headline)
                 Spacer()
-                Text("1 left").font(.caption).foregroundStyle(Palette.accentText)
+                Text("còn 1").font(.caption).foregroundStyle(Palette.accentText)
             }
-            task("Pick a color", done: true)
-            task("Ship the first build", done: false, tag: "Today")
+            task("Chọn màu nhấn", done: true)
+            task("Gửi bản build đầu tiên", done: false, tag: "Hôm nay")
             Spacer(minLength: 0)
             // Drawn, not real controls: the preview is a picture, and real
             // controls turn gray when the window is not in front.
             HStack {
-                Label("Add Task", systemImage: "plus")
+                Label("Thêm task", systemImage: "plus")
                     .font(.callout.weight(.medium))
                     .foregroundStyle(Palette.onAccent)
                     .padding(.horizontal, Space.md)
                     .frame(height: 24)
                     .background(Palette.accent, in: Capsule())
                 Spacer()
-                Text("Focus").font(.caption).foregroundStyle(.secondary)
+                Text("Tập trung").font(.caption).foregroundStyle(.secondary)
                 Capsule()
                     .fill(Palette.accent)
                     .frame(width: 28, height: 16)
