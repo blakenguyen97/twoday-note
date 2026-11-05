@@ -37,9 +37,17 @@ Cài đặt) và ghi "từ T4" để biết nó bị dời.
 | Đổi loại / dời ngày / xoá | menu chuột phải | — |
 | Sắp xếp lại | kéo thả | — |
 | Xoá việc đã xong | menu ••• | — |
-| Hoàn tác xoá | thông báo nhỏ dưới đáy | — |
+| Hoàn tác xoá | thông báo nhỏ trên thanh Focus | — |
+| Tập trung (Pomodoro) | thanh Focus dưới đáy: chọn 15/25/45/60 phút, Bắt đầu, Tạm dừng, Tiếp tục, Dừng | — |
 | Cài đặt | menu ••• | ⌘, |
 | Thoát | menu ••• | ⌘Q |
+
+## Focus
+
+Đếm ngược kiểu Pomodoro ở đáy popover. Thời gian còn lại chạy cạnh icon
+trên thanh menu (mờ khi tạm dừng), nên không cần mở popover. Hết giờ: tiếng
+"Glass", thanh menu ghi "Hết giờ" cho tới khi bắt đầu phiên mới hoặc đóng.
+Không lưu qua lần mở lại app.
 
 ## Empty states
 

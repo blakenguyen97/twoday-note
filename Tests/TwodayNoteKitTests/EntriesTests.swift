@@ -140,3 +140,47 @@ struct NotebookTests {
         #expect(back.entries == book.entries)
     }
 }
+
+@Suite("Focus clock")
+struct FocusClockTests {
+    let start = Date(timeIntervalSince1970: 1_000_000)
+
+    @Test func countsDown() {
+        var clock = FocusClock()
+        clock.start(minutes: 25, now: start)
+        #expect(clock.isRunning)
+        #expect(clock.remaining(now: start) == TimeInterval(1_500))
+        #expect(clock.remaining(now: start + 60) == TimeInterval(1_440))
+        #expect(clock.progress(now: start + 750) == 0.5)
+    }
+
+    @Test func pausesAndResumes() {
+        var clock = FocusClock()
+        clock.start(minutes: 25, now: start)
+        clock.pause(now: start + 100)
+        #expect(clock.isPaused)
+        // Time passes while paused; nothing is lost.
+        #expect(clock.remaining(now: start + 9_999) == TimeInterval(1_400))
+        clock.resume(now: start + 500)
+        #expect(clock.remaining(now: start + 500) == TimeInterval(1_400))
+    }
+
+    @Test func finishesOnce() {
+        var clock = FocusClock()
+        clock.start(minutes: 1, now: start)
+        let early = clock.tick(now: start + 59)
+        let onTime = clock.tick(now: start + 60)
+        let again = clock.tick(now: start + 61)
+        #expect(!early)
+        #expect(onTime)
+        #expect(!again)
+        #expect(clock.isFinished)
+        clock.stop()
+        #expect(clock.phase == .idle)
+    }
+
+    @Test("Format", arguments: [(1500.0, "25:00"), (245.0, "4:05"), (0.2, "0:01"), (0.0, "0:00"), (3600.0, "60:00")])
+    func formats(_ seconds: Double, _ text: String) {
+        #expect(FocusClock.format(seconds) == text)
+    }
+}

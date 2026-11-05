@@ -56,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         popover.delegate = self
 
         model.onChange = { [weak self] in self?.updateStatusTitle() }
+        model.onFocusChange = { [weak self] in self?.focusChanged() }
         model.refreshDay()
         updateStatusTitle()
         applyPrefs()
@@ -122,6 +123,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     var settings: NSWindow? { settingsWindow }
 
+    /// The text beside the menu bar icon, for the self-test.
+    var statusTitle: String { statusItem?.button?.title ?? "" }
+
     // MARK: Menu bar title, preferences, day changes
 
     private func updateStatusTitle() {
@@ -133,6 +137,55 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             statusItem?.button?.image = StatusIcon.make(count: shown)
         }
         statusItem?.button?.setAccessibilityValue(Progress.summary(remaining: remaining, done: model.todayCounts.done))
+        updateFocusTitle()
+    }
+
+    // MARK: Focus
+
+    /// Ticks once a second while Focus runs, on the main run loop.
+    private var ticker: Timer?
+
+    private func focusChanged() {
+        if model.focus.isRunning, ticker == nil {
+            // Common modes: keeps ticking while a menu is open.
+            let timer = Timer(timeInterval: 1, repeats: true) { @Sendable _ in
+                MainActor.assumeIsolated { AppDelegate.shared.focusTick() }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            ticker = timer
+        } else if !model.focus.isRunning {
+            ticker?.invalidate()
+            ticker = nil
+        }
+        updateFocusTitle()
+    }
+
+    func focusTick() {
+        if model.focus.tick(), !Store.isOverridden {
+            NSSound(named: "Glass")?.play()
+        }
+        updateFocusTitle()
+    }
+
+    /// The countdown beside the icon: "24:59", dimmed while paused, "Hết giờ" at the end.
+    private func updateFocusTitle() {
+        guard let button = statusItem?.button else { return }
+        let text: String?
+        if let remaining = model.focus.remaining() {
+            text = FocusClock.format(remaining)
+        } else {
+            text = model.focus.isFinished ? "Hết giờ" : nil
+        }
+        guard let text else {
+            button.title = ""
+            button.imagePosition = .imageOnly
+            return
+        }
+        button.attributedTitle = NSAttributedString(string: " " + text, attributes: [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .medium),
+            .foregroundColor: model.focus.isPaused ? NSColor.secondaryLabelColor : NSColor.labelColor,
+        ])
+        button.imagePosition = .imageLeading
     }
 
     @objc private func dayChanged() {

@@ -17,8 +17,15 @@ final class AppModel {
     var undo: UndoNotice?
     private(set) var today = Day.start(of: .now)
 
+    /// The Focus countdown at the bottom of the popover.
+    var focus = FocusClock() {
+        didSet { if focus != oldValue { onFocusChange?() } }
+    }
+
     /// Called after every change, for the menu bar count.
     @ObservationIgnored var onChange: (() -> Void)?
+    /// Called when Focus starts, pauses, resumes, stops, or finishes.
+    @ObservationIgnored var onFocusChange: (() -> Void)?
     @ObservationIgnored private var saveTask: Task<Void, Never>?
 
     static let dayCount = 3
@@ -136,6 +143,7 @@ struct UndoNotice: Identifiable {
 
 /// Settings, in UserDefaults. Views use @AppStorage with the same keys.
 enum Prefs {
+    static let focusMinutesKey = "focusMinutes"
     static let carryOverKey = "carryOver"
     static let showCountKey = "showCountInMenuBar"
     static let hotKeyKey = "globalHotKey"
@@ -143,6 +151,7 @@ enum Prefs {
     static var carryOver: Bool { UserDefaults.standard.object(forKey: carryOverKey) as? Bool ?? true }
     static var showCount: Bool { UserDefaults.standard.object(forKey: showCountKey) as? Bool ?? true }
     static var hotKey: Bool { UserDefaults.standard.object(forKey: hotKeyKey) as? Bool ?? true }
+    static var focusMinutes: Int { UserDefaults.standard.object(forKey: focusMinutesKey) as? Int ?? 25 }
 }
 
 /// Where the data lives: ~/Library/Application Support/TwodayNote/notes.json

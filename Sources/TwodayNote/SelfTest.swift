@@ -72,6 +72,19 @@ enum SelfTest {
             check("the popover opens and closes 10 times", app.popover.isShown)
             app.closePopover()
 
+            // Focus.
+            model.focus.start(minutes: 25)
+            check("Bắt đầu shows the countdown in the menu bar", app.statusTitle.contains("25:00"), app.statusTitle)
+            model.focus.pause()
+            check("Tạm dừng keeps the time", model.focus.isPaused && app.statusTitle.contains("25:00"), app.statusTitle)
+            model.focus.resume()
+            check("Tiếp tục runs again", model.focus.isRunning)
+            model.focus.start(minutes: 1, now: .now.addingTimeInterval(-61))
+            app.focusTick()
+            check("the end shows Hết giờ", model.focus.isFinished && app.statusTitle.contains("Hết giờ"), app.statusTitle)
+            model.focus.stop()
+            check("Dừng clears the menu bar", app.statusTitle.isEmpty, app.statusTitle)
+
             print(failures == 0 ? "SELFTEST PASS \(count) checks" : "SELFTEST FAIL \(failures) of \(count) checks")
             finish(code: failures == 0 ? 0 : 1)
         }

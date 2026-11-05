@@ -35,6 +35,15 @@ enum Snapshot {
                     try? await Task.sleep(for: .seconds(0.8))
                     capture(app.popoverWindow, to: "\(dir)/day\(offset)-\(mode).png")
                 }
+                if only == nil || only?.contains("focus") == true {
+                    // Today with a Focus session 4 minutes in.
+                    if !app.popover.isShown { app.showPopover() }
+                    app.model.dayOffset = 0
+                    app.model.focus.start(minutes: 25, now: .now.addingTimeInterval(-4 * 60 - 12))
+                    try? await Task.sleep(for: .seconds(0.8))
+                    capture(app.popoverWindow, to: "\(dir)/focus-\(mode).png")
+                    app.model.focus.stop()
+                }
                 if only == nil || only?.contains("settings") == true {
                     app.showSettings(nil)
                     try? await Task.sleep(for: .seconds(0.8))

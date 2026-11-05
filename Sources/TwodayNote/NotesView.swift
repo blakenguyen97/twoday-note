@@ -2,12 +2,13 @@ import AppKit
 import SwiftUI
 import TwodayNoteKit
 
-/// The popover: a date header, three day tabs, the add field, and the
-/// day's blocks. A quick-capture panel, so the add field takes focus.
+/// The popover: a date header, three day tabs, the add field, the day's
+/// blocks, and the Focus timer at the bottom. A quick-capture panel, so the
+/// add field takes focus.
 struct NotesView: View {
     @Environment(AppModel.self) private var model
 
-    static let size = CGSize(width: 360, height: 520)
+    static let size = CGSize(width: 360, height: 560)
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.md) {
@@ -18,11 +19,16 @@ struct NotesView: View {
                 .gridProbe("add", area: "popover")
                 .padding(.horizontal, Space.lg)
             EntryList()
+                .overlay(alignment: .bottom) { UndoBar() }
+                .animation(.snappy, value: model.undo?.id)
+            VStack(spacing: 0) {
+                Divider()
+                FocusBar()
+                    .padding(.horizontal, Space.lg)
+            }
         }
         .padding(.top, Space.lg)
         .frame(width: Self.size.width, height: Self.size.height, alignment: .top)
-        .overlay(alignment: .bottom) { UndoBar() }
-        .animation(.snappy, value: model.undo?.id)
         .background { DayShortcuts() }
         .onExitCommand { AppDelegate.shared.closePopover() }
         .gridArea("popover", inset: Space.lg)
@@ -308,6 +314,91 @@ private struct EntryMenu: View {
         }
         Divider()
         Button("Xoá", role: .destructive) { model.delete(entry.id) }
+    }
+}
+
+// MARK: Focus
+
+/// A Pomodoro countdown. The same time runs beside the menu bar icon, so
+/// the popover can stay closed while it counts.
+private struct FocusBar: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage(Prefs.focusMinutesKey) private var minutes = 25
+
+    var body: some View {
+        // Redraws once a second; the time itself comes from the clock's end date.
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            HStack(spacing: Space.sm) {
+                Image(systemName: model.focus.isFinished ? "checkmark.circle.fill" : "timer")
+                    .foregroundStyle(model.focus.phase == .idle ? AnyShapeStyle(.secondary) : AnyShapeStyle(Palette.accentText))
+                    .accessibilityHidden(true)
+                status(now: context.date)
+                Spacer(minLength: Space.sm)
+                controls
+            }
+        }
+        .frame(height: 44)
+    }
+
+    @ViewBuilder
+    private func status(now: Date) -> some View {
+        switch model.focus.phase {
+        case .idle:
+            Text("Tập trung")
+            Menu("\(minutes) phút") {
+                Picker("Thời lượng", selection: $minutes) {
+                    ForEach(FocusClock.choices, id: \.self) { Text("\($0) phút").tag($0) }
+                }
+                .pickerStyle(.inline)
+            }
+            .menuStyle(.button)
+            .buttonStyle(.borderless)
+            .fixedSize()
+            .foregroundStyle(.secondary)
+            .help("Thời lượng một phiên tập trung")
+        case .running, .paused:
+            Text(FocusClock.format(model.focus.remaining(now: now) ?? 0))
+                .font(.title3.monospacedDigit().weight(.semibold))
+                .foregroundStyle(model.focus.isPaused ? .secondary : .primary)
+                .contentTransition(.numericText(countsDown: true))
+            ProgressView(value: model.focus.progress(now: now))
+                .progressViewStyle(.linear)
+                .frame(width: 64)
+                .accessibilityLabel("Tiến độ phiên tập trung")
+            if model.focus.isPaused {
+                Text("Tạm dừng").font(.caption).foregroundStyle(.secondary)
+            }
+        case .finished:
+            Text("Hết giờ! Nghỉ chút nhé.")
+        }
+    }
+
+    @ViewBuilder
+    private var controls: some View {
+        switch model.focus.phase {
+        case .idle:
+            Button("Bắt đầu", systemImage: "play.fill") { model.focus.start(minutes: minutes) }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+        case .running:
+            iconButton("Tạm dừng", "pause.fill") { model.focus.pause() }
+            iconButton("Dừng", "stop.fill") { model.focus.stop() }
+        case .paused:
+            iconButton("Tiếp tục", "play.fill") { model.focus.resume() }
+            iconButton("Dừng", "stop.fill") { model.focus.stop() }
+        case .finished:
+            Button("Phiên mới", systemImage: "arrow.clockwise") { model.focus.start(minutes: minutes) }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            iconButton("Đóng", "xmark") { model.focus.stop() }
+        }
+    }
+
+    private func iconButton(_ title: String, _ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(title, systemImage: symbol, action: action)
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderless)
+            .help(title)
     }
 }
 
