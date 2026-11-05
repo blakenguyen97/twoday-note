@@ -54,7 +54,7 @@ private struct DayHeader: View {
         let counts = model.book.counts(on: model.selectedDay)
         VStack(alignment: .leading, spacing: Space.md) {
             HStack(alignment: .center) {
-                Wordmark()
+                Lockup()
                 Spacer()
                 MoreMenu(hasDone: counts.done > 0)
             }
@@ -77,17 +77,19 @@ private struct DayHeader: View {
     }
 }
 
-/// The TwodayNote wordmark from Brand/, light or dark to match the popover.
+/// The TwodayNote logo and name (the lockup in Brand/), light or dark to
+/// match the popover.
 /// Text stands in when the SVGs are missing (a bare `swift run`).
-private struct Wordmark: View {
+private struct Lockup: View {
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        if let image = Brand.wordmark(dark: scheme == .dark) {
+        if let image = Brand.lockup(dark: scheme == .dark) {
             Image(nsImage: image)
                 .resizable()
                 .scaledToFit()
-                .frame(height: Space.xxl)
+                // Taller than a text line: the name keeps its size beside the logo.
+                .frame(height: Space.section)
                 .accessibilityLabel("TwodayNote")
         } else {
             Text("TwodayNote").font(.headline)
@@ -96,10 +98,10 @@ private struct Wordmark: View {
 }
 
 enum Brand {
-    private static let light = load("TwodayNote-wordmark-light")
-    private static let dark = load("TwodayNote-wordmark-dark")
+    private static let light = load("TwodayNote-lockup-light")
+    private static let dark = load("TwodayNote-lockup-dark")
 
-    static func wordmark(dark isDark: Bool) -> NSImage? { isDark ? dark : light }
+    static func lockup(dark isDark: Bool) -> NSImage? { isDark ? dark : light }
 
     private static func load(_ name: String) -> NSImage? {
         Bundle.main.url(forResource: name, withExtension: "svg").flatMap(NSImage.init(contentsOf:))

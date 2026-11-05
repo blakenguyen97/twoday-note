@@ -21,7 +21,7 @@ Design plan: `docs/DESIGN.md`. UI text is Vietnamese.
 - `Sources/TwodayNoteKit/` rules and data logic with no SwiftUI. Tests in `Tests/TwodayNoteKitTests/`.
 - `Package.swift` a Swift package. There is no Xcode project.
 - `build.sh` builds, signs, and installs `~/Applications/TwodayNote.app`.
-- `Brand/` logos: wordmark and lockup, light and dark, SVG and PNG. `build.sh` copies the two wordmark SVGs into the app; the popover header shows them (`Wordmark` in `NotesView.swift`).
+- `Brand/` logos: wordmark and lockup, light and dark, SVG and PNG. `build.sh` copies the two lockup SVGs (logo and name) into the app; the popover header shows them (`Lockup` in `NotesView.swift`).
 - `Icon/AppIcon.iconset` the app icon: macOS PNGs from 16 to 1024 px (`icon_16x16.png` … `icon_512x512@2x.png`). `build.sh` turns it into `Resources/AppIcon.icns` with `tools/make_icon.sh` (`iconutil`, no Xcode needed). To change the icon, replace the PNGs with the same names.
 - `docs/` the brief, the screen index, and the user stories, when they exist.
 

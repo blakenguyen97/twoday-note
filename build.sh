@@ -44,8 +44,8 @@ if [[ ! -f "$icns" || -n "$(find "$here/Icon/AppIcon.iconset" -newer "$icns" | h
   "$here/tools/make_icon.sh"
 fi
 cp -X "$icns" "$app/Contents/Resources/"
-# The wordmark at the top of the popover (Brand/, light and dark).
-cp -X "$here/Brand/TwodayNote-wordmark-light.svg" "$here/Brand/TwodayNote-wordmark-dark.svg" "$app/Contents/Resources/"
+# The logo and name at the top of the popover (Brand/, light and dark).
+cp -X "$here/Brand/TwodayNote-lockup-light.svg" "$here/Brand/TwodayNote-lockup-dark.svg" "$app/Contents/Resources/"
 xattr -cr "$app"
 codesign --force --sign "$identity" "$app" 2>&1 | grep -v "replacing existing signature" || true
 echo "installed $app (signed: ${identity})"
