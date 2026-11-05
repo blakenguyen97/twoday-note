@@ -42,7 +42,7 @@ The interface is in Vietnamese.
 ## Install
 
 ```sh
-git clone <repo-url> TwodayNote
+git clone https://github.com/blakenguyen97/twoday-note.git TwodayNote
 cd TwodayNote
 ./build.sh --open
 ```
